@@ -2,73 +2,54 @@
 using System.Collections;
 
 public class SceneModeCameraMovement : MonoBehaviour {
+    public float zoomSpeed = 20.0f;
+    public float rotateXSpeed = 0.1f;
+    public float rotateYSpeed = 0.1f;
+    public float transXSpeed = 1.0f;
+    public float transYSpeed = 1.0f;
+    private Vector3 target;
+    private Vector3 prevMousePos;
+    private Vector3 currMousePos;
 
-    public Transform target;
-    public float distance = 5.0f;
-    public float xSpeed = 120.0f;
-    public float ySpeed = 120.0f;
-
-    public float yMinLimit = -20f;
-    public float yMaxLimit = 80f;
-
-    public float distanceMin = .5f;
-    public float distanceMax = 15f;
-
-    private Rigidbody rigidbody;
- 
-    float x = 0.0f;
-    float y = 0.0f;
- 
     // Use this for initialization
-    void Start () 
+    void Start()
     {
-        Vector3 angles = transform.eulerAngles;
         Vector3 position = transform.position;
         Vector3 lookAt = transform.forward;
         float v = -(position.y / lookAt.y);
-        //target = position + v * (lookAt);
-        x = angles.y;
-        y = angles.x;
-        if (rigidbody != null)
+        target = position + v * (lookAt);
+    }
+    void Update()
+    {
+        if(Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
-            rigidbody.freezeRotation = true;
+            prevMousePos = Input.mousePosition;
+            return;
         }
-    }
-
-    void LateUpdate()
-    {
-        //if (Input.GetMouseButtonDown(0))
-        //{
-            if (target)
-            {
-                x += Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
-                y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
-
-                y = ClampAngle(y, yMinLimit, yMaxLimit);
-
-                Quaternion rotation = Quaternion.Euler(y, x, 0);
-
-                distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel") * 5, distanceMin, distanceMax);
-
-                RaycastHit hit;
-                if (Physics.Linecast(target.position, transform.position, out hit))
-                {
-                    distance -= hit.distance;
-                }
-                Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
-                Vector3 position = rotation * negDistance + target.position;
-
-                transform.rotation = rotation;
-                transform.position = position;
-            }
-        //}
-    }
-    public static float ClampAngle(float angle, float min, float max)
-    {
-        if (angle < -360F)
-            angle += 360F;
-        if (angle > 360F)
-            angle -= 360F;
-        return Mathf.Clamp(angle, min, max);
+        currMousePos = Input.mousePosition;
+        Vector3 diff = currMousePos - prevMousePos;
+        prevMousePos = currMousePos;
+        if (Input.GetMouseButton(0))
+        {
+            transform.RotateAround(target, transform.right, rotateXSpeed * diff.y);
+            transform.RotateAround(target, Vector3.up, -rotateYSpeed * diff.x);
+        }
+        if (Input.GetMouseButton(1))
+        {
+            Vector3 translation = new Vector3(-transXSpeed*diff.x, -transYSpeed*diff.y , 0);
+            Vector3 origPos = transform.position;
+            transform.Translate(translation);
+            target += transform.position - origPos;
+        }
+        if(Input.GetAxis("Mouse ScrollWheel") > 0f)
+        {
+            Vector3 translation = new Vector3(0,0,zoomSpeed);
+            transform.Translate(translation);
+        }
+        else if(Input.GetAxis("Mouse ScrollWheel") < 0f)
+        {
+            Vector3 translation = new Vector3(0, 0, -zoomSpeed);
+            transform.Translate(translation);
+        }
     }
 }
