@@ -24,8 +24,8 @@ public class ObjectMenuEvents : MonoBehaviour
     public GameObject TreeModel;
     public GameObject BuildingModel;
     public GameObject RobotModel;
+	private MeshCollider mc;
     private RectTransform rt;
-    private MeshCollider mc;
     private GameObject currObject;
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
@@ -33,34 +33,32 @@ public class ObjectMenuEvents : MonoBehaviour
     void Start()
     {
         ObjectMenuDropdown.onValueChanged.AddListener(delegate {
+			clearObject(PreviewBG);
             addObject(ObjectMenuDropdown);
         });
         currObject = null;
+		ObjectMenuDropdown.onValueChanged.Invoke(0);
+
     }
-   
+	private void clearObject(GameObject obj){
+		if (obj.transform.childCount > 0) {
+			GameObject preview = obj.transform.GetChild (0).gameObject;
+			Destroy (preview);
+		}
+	}
     private void addObject(Dropdown target)
     {
         switch (target.value)
         {
             case 0:// "Tree"
-                if (currObject)
-                {
-                    Destroy(currObject);
-                    currObject = null;
-                }
                 GameObject treeClone = Instantiate(TreeModel);
                 treeClone.transform.parent = PreviewBG.transform;
                 rt = treeClone.AddComponent<RectTransform>();
-                rt.localEulerAngles = new Vector3(270, 90, 0);
+                rt.localEulerAngles = new Vector3(270, 0, 0);
                 rt.localScale = new Vector3(300, 300, 300);
                 currObject = treeClone;
                 break;
             case 1:// "Building":
-                if (currObject)
-                {
-                    Destroy(currObject);
-                    currObject = null;
-                }
                 GameObject buildingClone = Instantiate(BuildingModel);
                 buildingClone.transform.parent = PreviewBG.transform;
                 rt = buildingClone.AddComponent<RectTransform>();
@@ -69,11 +67,6 @@ public class ObjectMenuEvents : MonoBehaviour
                 currObject = buildingClone;
                 break;
             case 2:// "Robot":
-                if (currObject)
-                {
-                    Destroy(currObject);
-                    currObject = null;
-                }
                 GameObject robotClone = Instantiate(RobotModel);
                 robotClone.transform.parent = PreviewBG.transform;
                 rt = robotClone.AddComponent<RectTransform>();
@@ -92,7 +85,8 @@ public class ObjectMenuEvents : MonoBehaviour
         rt.offsetMin = new Vector2(0, 0);
 
         mc = currObject.AddComponent<MeshCollider>();
-        mc.isTrigger = true;
+		mc.isTrigger = true;
+		mc.convex = true;
 
         currObject.AddComponent<ObjectEvents>();
     }

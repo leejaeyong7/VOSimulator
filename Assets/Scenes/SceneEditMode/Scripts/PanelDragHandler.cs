@@ -29,8 +29,13 @@ public class PanelDragHandler :
 
     public void OnDrag(PointerEventData eventData)
     {
-        transform.parent.gameObject.transform.position += 
-            (Vector3)eventData.delta;
+		float dx = eventData.delta.x;
+		float dy = eventData.delta.y;
+		RectTransform trans = (RectTransform)transform.parent.transform;
+		Vector3 pos = trans.localPosition;
+		pos.x += dx;
+		pos.y += dy;
+		trans.localPosition = pos;
     }
 
     public void OnEndDrag(PointerEventData eventData)

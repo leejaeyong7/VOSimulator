@@ -60,6 +60,7 @@ public class GlobalMenuEvents : MonoBehaviour {
                 break;
             default:
                 break;
+
         }
     }
     private void setMenuType(int index)
