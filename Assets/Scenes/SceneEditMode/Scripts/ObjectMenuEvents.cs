@@ -94,17 +94,7 @@ public class ObjectMenuEvents : MonoBehaviour
     {
         ObjectMenuDropdown.value = index;
     }
-    public bool isObjectDragged()
-    {
-        if (!currObject)
-        {
-            return false;
-        }
-        else
-        {
-            return currObject.GetComponent<ObjectEvents>().isObjectDragged;
-        }
-    }
+   
     public void removeCurrObject()
     {
         currObject = null;

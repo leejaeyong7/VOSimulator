@@ -23,6 +23,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
     public float transXSpeed = 1.0f;
     public float transYSpeed = 1.0f;
     public EditModeEvents ev;
+	public bool isObjectDragged = false;
     /* Private variables */
     private Vector3 target;
     private Vector3 prevMousePos;
@@ -50,7 +51,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
      */
     void Update()
     {
-        if (ev.objectMenuEvents.isObjectDragged())
+        if (isObjectDragged)
         {
             return;
         }

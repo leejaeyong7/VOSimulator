@@ -1,12 +1,38 @@
-﻿using UnityEngine;
+﻿/*============================================================================
+ * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
+ * @file       : ObjectEvents.cs
+ * @brief      : Event handler for Object Menu
+ * Copyright (c) Jae Yong Lee / UIUC Summer 2016
+ =============================================================================*/
+//----------------------------------------------------------------------------//
+//                               CLASS IMPORTS                                //
+//----------------------------------------------------------------------------//
+using UnityEngine;
 using System.Collections;
-
+//----------------------------------------------------------------------------//
+//                             END CLASS IMPORTS                              //
+//----------------------------------------------------------------------------//
+//----------------------------------------------------------------------------//
+//                             CLASS DEFINITIONS                              //
+//----------------------------------------------------------------------------//
 public class ObjectEvents : MonoBehaviour {
-    public bool isObjectDragged;
-    private Vector3 screenPoint;
-	private Vector3 raycasthit;
-    private Vector3 offset;
+	private Vector3 screenPoint;
 	private Ray ray;
+	private SceneModeCameraMovement cameraMovement;
+
+	//--------------------------------------------------------------------//
+	//                    PUBLIC FUNCTION DEFINITIONS                     //
+	//--------------------------------------------------------------------//
+	/**
+     * @brief Initializes camera transformation data
+     * @action sets target
+     */
+	void Start()
+	{
+		cameraMovement = GameObject.Find ("SceneCamera")
+			.GetComponent<SceneModeCameraMovement> ();
+	}
+
     void OnMouseDown()
     {
 		// copy object iff is on preview
@@ -16,23 +42,21 @@ public class ObjectEvents : MonoBehaviour {
 			copy.transform.position = this.gameObject.transform.position;
 			copy.transform.rotation = this.gameObject.transform.rotation;
 			copy.transform.localScale = this.gameObject.transform.localScale;
+
+			// get local rotation ( straight rotation )
+			Quaternion locRot = this.gameObject.transform.localRotation;
+			Vector3 locScale = this.gameObject.transform.localScale;
+
+			// set parent to Terrain
+			this.gameObject.transform.SetParent (Terrain.activeTerrain.transform);
+			this.gameObject.transform.localRotation = locRot;
+			this.gameObject.transform.localScale = locScale;
+			screenPoint = Camera.main.WorldToScreenPoint(transform.position);
 		}
 		print ("Number of mesh triangles: " + this.gameObject.GetComponent<MeshFilter> ().mesh.triangles.Length.ToString ());
-		isObjectDragged = true;
-
-		// get local rotation ( straight rotation )
-		Quaternion locRot = this.gameObject.transform.localRotation;
-		Vector3 locScale = this.gameObject.transform.localScale;
-
-		// set parent to Terrain
-		this.gameObject.transform.SetParent (Terrain.activeTerrain.transform);
-		this.gameObject.transform.localRotation = locRot;
-		this.gameObject.transform.localScale = locScale;
-        screenPoint = Camera.main.WorldToScreenPoint(transform.position);
+		cameraMovement.isObjectDragged = true;
 
 
-        offset = transform.position - Camera.main.ScreenToWorldPoint(
-            new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
     }
 
     void OnMouseDrag()
@@ -48,12 +72,28 @@ public class ObjectEvents : MonoBehaviour {
 			transform.position = ray.GetPoint(distance);
 		}
     }
+
     void OnMouseUp()
     {
-        isObjectDragged = false;
+		cameraMovement.isObjectDragged = false;
         if(GetComponentInParent<ObjectMenuEvents>())
         {
             GetComponentInParent<ObjectMenuEvents>().removeCurrObject();
         }
-    }
+		this.gameObject.AddComponent<CurrentObjectEvents>();
+		Destroy (this.gameObject.GetComponent<ObjectEvents> ());
+	}
+	//--------------------------------------------------------------------//
+	//                  END PUBLIC FUNCTION DEFINITIONS                   //
+	//--------------------------------------------------------------------//
+	//--------------------------------------------------------------------//
+	//                    PRIVATE FUNCTION DEFINITIONS                    //
+	//--------------------------------------------------------------------//
+	//--------------------------------------------------------------------//
+	//                  END PRIVATE FUNCTION DEFINITIONS                  //
+	//--------------------------------------------------------------------//
 }
+//----------------------------------------------------------------------------//
+//                           END CLASS DEFINITIONS                            //
+//----------------------------------------------------------------------------//
+
