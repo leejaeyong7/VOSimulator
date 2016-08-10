@@ -14,14 +14,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j
 
 
-echo "Configuring and building Thirdparty/AprilTags ..."
-cd ../../AprilTagsC_3_18_2015
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j
-
-
 echo "Uncompress vocabulary ..."
 cd ../../../
 cd Vocabulary

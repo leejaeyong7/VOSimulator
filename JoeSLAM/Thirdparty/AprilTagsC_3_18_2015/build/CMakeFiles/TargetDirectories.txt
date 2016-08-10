@@ -1,1 +1,0 @@
-/home/joe/Documents/ORB_SLAM2/Thirdparty/AprilTagsC_3_18_2015/build/CMakeFiles/AprilTags.dir
