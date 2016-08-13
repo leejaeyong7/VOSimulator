@@ -23,6 +23,7 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include<stdio.h>
 #include<string>
 #include<limits>
 #include<algorithm>
@@ -45,9 +46,9 @@ bool loaded_from_video = false;
 
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    if(argc != 4 && argc != 5)
     {
-        cerr << endl << "Usage: ./mono_jmd path_to_vocabulary path_to_settings path_to_sequence_or_videofile" << endl;
+        cerr << endl << "Usage: ./mono_jmd path_to_vocabulary path_to_settings path_to_sequence_or_videofile [close_loops(boolean) - 0/1]" << endl;
         return 1;
     }   
 
@@ -59,7 +60,12 @@ int main(int argc, char **argv)
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    bool bCloseLoops = true;
+    if(argc == 5)
+    {
+        bCloseLoops = !(strcmp(argv[4],"0") == 0);
+    } 
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true,"",bCloseLoops);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -81,7 +87,15 @@ int main(int argc, char **argv)
         }
         else
         {
-            im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
+            // Raj: The line under if(0) doesn't seem to work because of incorrect path. I'm leaving it in there in case Joe wants to access it
+            if(0)
+            {
+                im = cv::imread(string(argv[3])+"/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
+            }
+            else
+            {
+                im = cv::imread("/"+vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
+            }
         }
         double tframe = vTimestamps[ni];
 
