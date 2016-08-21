@@ -22,6 +22,7 @@
 #include "LoopClosing.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
+#include <string>
 
 #include<mutex>
 
@@ -232,6 +233,9 @@ void LocalMapping::CreateNewMapPoints()
     const float ratioFactor = 1.5f*mpCurrentKeyFrame->mfScaleFactor;
 
     int nnew=0;
+
+    FILE * pFile = fopen(strcat((char *)std::to_string(mpCurrentKeyFrame->mnId).c_str(), ".out"), "w");
+
 
     // Search matches with epipolar restriction and triangulate
     for(size_t i=0; i<vpNeighKFs.size(); i++)
@@ -445,10 +449,19 @@ void LocalMapping::CreateNewMapPoints()
 
             mpMap->AddMapPoint(pMP);
             mlpRecentAddedMapPoints.push_back(pMP);
-
+            char output[200];
+            sprintf(output, "************************\n%s,%s\n %s,%s\n%s,%s\n %s,%s\n%s,%s,%s\n",
+                std::to_string(mpCurrentKeyFrame->mnId).c_str(), std::to_string((mpCurrentKeyFrame->mvKeysUn).size()).c_str(),
+                std::to_string(kp1.pt.x).c_str(), std::to_string(kp1.pt.y).c_str(),
+                std::to_string(pKF2->mnId).c_str(), std::to_string((pKF2->mvKeysUn).size()).c_str(),
+                std::to_string(kp2.pt.x).c_str(),std::to_string(kp2.pt.y).c_str(),
+                std::to_string(x3D.at<float>(0)).c_str(),std::to_string(x3D.at<float>(1)).c_str(),std::to_string(x3D.at<float>(2)).c_str()
+                );
+            fputs(output, pFile);
             nnew++;
         }
     }
+    fclose(pFile);
 }
 
 void LocalMapping::SearchInNeighbors()
