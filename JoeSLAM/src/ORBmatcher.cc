@@ -1348,6 +1348,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
     const bool bForward = tlc.at<float>(2)>CurrentFrame.mb && !bMono;
     const bool bBackward = -tlc.at<float>(2)>CurrentFrame.mb && !bMono;
 
+    FILE * pFile = fopen(strcat((char *)std::to_string(CurrentFrame.mnId).c_str(), ".out"), "w");
     for(int i=0; i<LastFrame.N; i++)
     {
         MapPoint* pMP = LastFrame.mvpMapPoints[i];
@@ -1438,11 +1439,35 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                             bin=0;
                         assert(bin>=0 && bin<HISTO_LENGTH);
                         rotHist[bin].push_back(bestIdx2);
+
+                        char output[500];
+                        cv::Mat worldPos = LastFrame.mvpMapPoints[i]->GetWorldPos();
+                        cv::Mat mDescriptor = LastFrame.mvpMapPoints[i]->GetDescriptor();
+                        sprintf(output, "************************\n%s,%s\n %s,%s\n%s,%s\n %s,%s\n%s,%s,%s\n[%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s]\n",
+                            std::to_string(CurrentFrame.mnId).c_str(), std::to_string(CurrentFrame.mvKeysUn.size()).c_str(),
+                            std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.x).c_str(), std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.y).c_str(),
+                            std::to_string(LastFrame.mnId).c_str(), std::to_string(LastFrame.mvKeysUn.size()).c_str(),
+                            std::to_string(LastFrame.mvKeysUn[i].pt.x).c_str(),std::to_string(LastFrame.mvKeysUn[i].pt.y).c_str(),
+                            std::to_string(worldPos.at<float>(0)).c_str(),std::to_string(worldPos.at<float>(1)).c_str(),std::to_string(worldPos.at<float>(2)).c_str(),
+                            std::to_string((int)(mDescriptor.data[0])).c_str(),std::to_string((int)(mDescriptor.data[1])).c_str(),std::to_string((int)(mDescriptor.data[2])).c_str(),
+                            std::to_string((int)(mDescriptor.data[3])).c_str(),std::to_string((int)(mDescriptor.data[4])).c_str(),std::to_string((int)(mDescriptor.data[5])).c_str(),
+                            std::to_string((int)(mDescriptor.data[6])).c_str(),std::to_string((int)(mDescriptor.data[7])).c_str(),std::to_string((int)(mDescriptor.data[8])).c_str(),
+                            std::to_string((int)(mDescriptor.data[9])).c_str(),std::to_string((int)(mDescriptor.data[10])).c_str(),std::to_string((int)(mDescriptor.data[11])).c_str(),
+                            std::to_string((int)(mDescriptor.data[12])).c_str(),std::to_string((int)(mDescriptor.data[13])).c_str(),std::to_string((int)(mDescriptor.data[14])).c_str(),
+                            std::to_string((int)(mDescriptor.data[15])).c_str(),std::to_string((int)(mDescriptor.data[16])).c_str(),std::to_string((int)(mDescriptor.data[17])).c_str(),
+                            std::to_string((int)(mDescriptor.data[18])).c_str(),std::to_string((int)(mDescriptor.data[19])).c_str(),std::to_string((int)(mDescriptor.data[20])).c_str(),
+                            std::to_string((int)(mDescriptor.data[21])).c_str(),std::to_string((int)(mDescriptor.data[22])).c_str(),std::to_string((int)(mDescriptor.data[23])).c_str(),
+                            std::to_string((int)(mDescriptor.data[24])).c_str(),std::to_string((int)(mDescriptor.data[25])).c_str(),std::to_string((int)(mDescriptor.data[26])).c_str(),
+                            std::to_string((int)(mDescriptor.data[27])).c_str(),std::to_string((int)(mDescriptor.data[28])).c_str(),std::to_string((int)(mDescriptor.data[29])).c_str(),
+                            std::to_string((int)(mDescriptor.data[30])).c_str(),std::to_string((int)(mDescriptor.data[31])).c_str()
+                            );
+                        fputs(output, pFile);
                     }
                 }
             }
         }
     }
+    fclose(pFile);
 
     //Apply rotation consistency
     if(mbCheckOrientation)
