@@ -23,6 +23,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
     public float transXSpeed = 1.0f;
     public float transYSpeed = 1.0f;
     public EditModeEvents ev;
+	public CustomFileBrowser fb;
 	public bool isObjectDragged = false;
     /* Private variables */
     private Vector3 target;
@@ -51,14 +52,9 @@ public class SceneModeCameraMovement : MonoBehaviour {
      */
     void Update()
     {
-        if (isObjectDragged)
-        {
-            return;
-        }
-        if(PanelDragHandler.isPanelDragged)
-        {
-            return;
-        }
+		if (!isAbleToUpdate ()) {
+			return;
+		}
         // if mouse button is being clicked for first time, get its position
         if(Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
         {
@@ -111,6 +107,9 @@ public class SceneModeCameraMovement : MonoBehaviour {
             transform.Translate(translation);
         }
     }
+	bool isAbleToUpdate(){
+		return !(isObjectDragged || PanelDragHandler.isPanelDragged || fb.showFB);
+	}
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //
     //--------------------------------------------------------------------//

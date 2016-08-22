@@ -1,13 +1,14 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : LocalMenuEvents.cs
- * @brief      : Event handler for local menu interactions
+ * @file       : FileMenuEvents.cs
+ * @brief      : Event handler for File menu
  * Copyright (c) Jae Yong Lee / UIUC Summer 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -15,16 +16,29 @@ using System.Collections;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class LocalMenuEvents : MonoBehaviour {
+public class FilePanel : MenuPanel {
+	public CustomFileBrowser fb;
+	public Button newButton;
+	public Button saveButton;
+	public Button loadButton;
+	public Button helpButton;
+	public Button quitButton;
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//
+	void Start(){
+		// declare event 
+		newButton.onClick.AddListener(() => {
+			print("test");
+		});
+	}
 	//--------------------------------------------------------------------//
 	//                  END PUBLIC FUNCTION DEFINITIONS                   //
 	//--------------------------------------------------------------------//
 	//--------------------------------------------------------------------//
 	//                    PRIVATE FUNCTION DEFINITIONS                    //
 	//--------------------------------------------------------------------//
+
 	//--------------------------------------------------------------------//
 	//                  END PRIVATE FUNCTION DEFINITIONS                  //
 	//--------------------------------------------------------------------//

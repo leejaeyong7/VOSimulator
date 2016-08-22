@@ -1,13 +1,14 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : EditModeEvents.cs
- * @brief      : Event handler for Edit mode scene in VOS
+ * @file       : GlobalMenuEvents.cs
+ * @brief      : Event handler for Global Panel
  * Copyright (c) Jae Yong Lee / UIUC Summer 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -15,63 +16,49 @@ using System.Collections;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class EditModeEvents : MonoBehaviour {
-    public EnvMenu objectMenuEvents;
-    public ObjectEvents objEvents;
-	public GameObject selectedObject;
-	public GameObject localMenu;
-	private Shader[] defaultShaders;
-	private Shader highlighter;
-	void Start(){
-		highlighter = Shader.Find ("Custom/GlowShader");
-		localMenu.SetActive (false);
-	}
+public class TerrainMenu : MenuPanel{
+	public Dropdown terrainDropdown;
+	public TextureOptions TextureOptions;
+	public ReliefOptions ReliefOptions;
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
     //--------------------------------------------------------------------//
-	public void selectObject(GameObject obj){
-		// check if any object selected, if so, unselect object
-
-		if (selectedObject) {
-			unselectObject ();
-		}
-		selectedObject = obj;
-		MeshRenderer meshRenderer = obj.GetComponent<MeshRenderer> ();
-		defaultShaders = new Shader[meshRenderer.materials.Length];
-		for (int i = 0; i < meshRenderer.materials.Length; i++) {
-			defaultShaders [i] = meshRenderer.materials [i].shader;
-		}
-		highlightObject ();
-		localMenu.SetActive (true);
+    void Start () {
+		terrainDropdown.onValueChanged.AddListener(delegate {
+			chooseTextureOptionType(terrainDropdown);
+		});
+    }
+	new public void Show(){
+		base.Show ();
+		terrainDropdown.onValueChanged.Invoke (0);
 	}
-	public void unselectObject(){
-		if (selectedObject) {
-			unhighlightObject ();
-		}
-		defaultShaders = null;
-		selectedObject = null;
-		localMenu.SetActive (false);
-	}
+    public void loadTerrain(string type) {
+    }
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //
     //--------------------------------------------------------------------//
     //--------------------------------------------------------------------//
     //                    PRIVATE FUNCTION DEFINITIONS                    //
     //--------------------------------------------------------------------//
-	void highlightObject(){
-		MeshRenderer meshRenderer = 
-			selectedObject.GetComponent<MeshRenderer> ();
-		foreach(Material m in meshRenderer.materials) {
-			m.shader = highlighter;
-		}
-	}
-	void unhighlightObject(){
-		if (defaultShaders != null) {
-			MeshRenderer meshRenderer = 
-				selectedObject.GetComponent<MeshRenderer> ();
-			for (int i = 0; i < meshRenderer.materials.Length; i++) {
-				meshRenderer.materials [i].shader = defaultShaders [i];
-			}
+    private void UpdateTerrainTexture(int textureId)
+    {
+
+    }
+	// edit menu dropdown select event handler
+	private void chooseTextureOptionType(Dropdown target)
+	{
+		switch (target.value) {
+		case 0:
+			TextureOptions.Show ();
+			ReliefOptions.Hide ();
+			break;
+		case 1:
+			TextureOptions.Hide();
+			ReliefOptions.Show();
+			break;
+		default:
+			break;
+
 		}
 	}
     //--------------------------------------------------------------------//
@@ -81,3 +68,4 @@ public class EditModeEvents : MonoBehaviour {
 //----------------------------------------------------------------------------//
 //                           END CLASS DEFINITIONS                            //
 //----------------------------------------------------------------------------//
+

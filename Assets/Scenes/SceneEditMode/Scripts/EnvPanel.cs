@@ -1,13 +1,14 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : CurrentObjectEvents.cs
- * @brief      : Event handler for selected Object
+ * @file       : EnvironmentMenuEvents.cs
+ * @brief      : Event handler for Environment menu
  * Copyright (c) Jae Yong Lee / UIUC Summer 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -15,86 +16,57 @@ using System.Collections;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class CurrentObjectEvents : MonoBehaviour {
-	private bool wasActive = false;
-	private bool isMoved = false;
-	private bool rayUpdated = false;
+public class EnvPanel : MenuPanel{
+	public Dropdown editMenuDropdown;
+	public TerrainMenu TerrainMenu;
+	public EnvMenu EnvMenu;
 
-	private SceneModeCameraMovement cameraMovement;
-	private EditModeEvents ev;
-	private Vector3 raycasthit;
-	private Vector3 raycastDiff;
-	private Ray ray;
+	void Start(){
+		editMenuDropdown.onValueChanged.AddListener(delegate {
+			chooseEditMenuType(editMenuDropdown);
+		});
+		editMenuDropdown.onValueChanged.Invoke(0);
+	}
+	new public void Show(){
+		base.Show ();
+		editMenuDropdown.onValueChanged.Invoke(0);
+	}
+	new public void Hide(){
+		base.Hide ();
 
+	}
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//
+
 	//--------------------------------------------------------------------//
 	//                  END PUBLIC FUNCTION DEFINITIONS                   //
 	//--------------------------------------------------------------------//
 	//--------------------------------------------------------------------//
 	//                    PRIVATE FUNCTION DEFINITIONS                    //
 	//--------------------------------------------------------------------//
-	void Start(){
-		ev = GameObject.Find ("EventSystem")
-			.GetComponent<EditModeEvents> ();
-		cameraMovement = GameObject.Find ("SceneCamera")
-			.GetComponent<SceneModeCameraMovement> ();
-	}
-	void OnMouseDown(){
-		isMoved = false;
-		rayUpdated = false;
-		// if this was selected already
-		if (isSelected()) {
-			wasActive = true;
-		} else { // if not, select object
-			ev.selectObject (this.gameObject);
-		}
-		cameraMovement.isObjectDragged = true;
-	}
-	void OnMouseDrag(){
-		ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-		// create a plane at 0,0,0 whose normal points to +Y:
-		Plane hPlane = new Plane(Vector3.up, Vector3.zero);
-		// Plane.Raycast stores the distance from ray.origin
-		// to the hit point in this variable:
-		float distance = 0; 
-		// if the ray hits the plane...
-		if (hPlane.Raycast(ray, out distance)){
-			// get the hit point:
-			if (!rayUpdated) {
-				raycasthit = ray.GetPoint (distance);
-				rayUpdated = true;
-			} else {
-				raycastDiff = ray.GetPoint (distance) - raycasthit;
-				raycasthit = ray.GetPoint (distance);
-			}
-			if (raycastDiff != Vector3.zero) {
-				transform.position += raycastDiff;
-				isMoved = true;
-			}
-		}
-	}
-	void OnMouseUp(){
-		// if this was active(i.e has been active previously)
-		if (isSelected() && wasActive) {
-			if (!isMoved) {
-				ev.unselectObject ();
-			}
-		}
-		isMoved = false;
-		wasActive = false;
+	// edit menu dropdown select event handler
+	private void chooseEditMenuType(Dropdown target)
+	{
+		switch (target.value)
+		{
+		case 0:
+			TerrainMenu.Show ();
+			EnvMenu.Hide ();
+			break;
+		case 1:
+			TerrainMenu.Hide ();
+			EnvMenu.Show ();
+			break;
+		default:
+			break;
 
-		if (cameraMovement) {
-			cameraMovement.isObjectDragged = false;
 		}
 	}
-	bool isSelected(){
-		if (ev && ev.selectedObject) {
-			return ev.selectedObject == this.gameObject;
-		} else {
-			return false;
-		}
+
+	private void setEditMenuType(int index)
+	{
+		editMenuDropdown.value = index;
 	}
 	//--------------------------------------------------------------------//
 	//                  END PRIVATE FUNCTION DEFINITIONS                  //

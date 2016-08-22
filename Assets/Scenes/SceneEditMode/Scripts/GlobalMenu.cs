@@ -16,19 +16,21 @@ using System.Collections;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class GlobalMenuEvents : MonoBehaviour {
-    public Dropdown globalMenuDropdown;
-    public GameObject TerrainMenu;
-    public GameObject ObjectMenu;
-    public GameObject LocalEditPanel;
-    public ObjectMenuEvents objMenuEvents;
+public class GlobalMenu : MonoBehaviour {
+	public Dropdown globalMenuDropdown;
+	public EnvPanel EnvPanel;
+	public FilePanel FilePanel;
+	public CameraPanel CameraPanel;
+	public RunPanel RunPanel;
+
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
     //--------------------------------------------------------------------//
     // Use this for initialization
     void Start () {
+		// initialize global menu
         globalMenuDropdown.onValueChanged.AddListener(delegate {
-            chooseMenuType(globalMenuDropdown);
+            chooseGlobalMenuType(globalMenuDropdown);
         });
         globalMenuDropdown.onValueChanged.Invoke(0);
     }
@@ -38,32 +40,42 @@ public class GlobalMenuEvents : MonoBehaviour {
     //--------------------------------------------------------------------//
     //                    PRIVATE FUNCTION DEFINITIONS                    //
     //--------------------------------------------------------------------//
-    private void chooseMenuType(Dropdown target)
+	// global menu dropdown select event handler
+    private void chooseGlobalMenuType(Dropdown target)
     {
         switch (target.value)
         {
-            case 0:
-                TerrainMenu.SetActive(true);
-                ObjectMenu.SetActive(false);
-                LocalEditPanel.SetActive(false);
-                break;
-            case 1:
-                TerrainMenu.SetActive(false);
-                ObjectMenu.SetActive(true);
-                LocalEditPanel.SetActive(true);
-                objMenuEvents.ObjectMenuDropdown.onValueChanged.Invoke(0);
-                break;
-            case 2:
-                TerrainMenu.SetActive(false);
-                ObjectMenu.SetActive(false);
-                LocalEditPanel.SetActive(false);
-                break;
-            default:
-                break;
+		case 0: // Edit Panel
+			EnvPanel.Show();
+			FilePanel.Hide();
+			CameraPanel.Hide();
+			RunPanel.Hide();
+            break;
+		case 1: // File Panel
+			EnvPanel.Hide();
+			FilePanel.Show();
+			CameraPanel.Hide();
+			RunPanel.Hide();
+			break;
+		case 2: // Camera Panel
+			EnvPanel.Hide();
+			FilePanel.Hide();
+			CameraPanel.Show();
+			RunPanel.Hide();
+			break;
+		case 3: // Run Panel
+			EnvPanel.Hide();
+			FilePanel.Hide();
+			CameraPanel.Hide();
+			RunPanel.Show();
+			break;
+        default:
+            break;
 
         }
     }
-    private void setMenuType(int index)
+
+    private void setGlobalMenuType(int index)
     {
         globalMenuDropdown.value = index;
     }

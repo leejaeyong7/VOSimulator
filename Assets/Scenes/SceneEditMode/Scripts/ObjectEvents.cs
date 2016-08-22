@@ -51,7 +51,6 @@ public class ObjectEvents : MonoBehaviour {
 			this.gameObject.transform.SetParent (Terrain.activeTerrain.transform);
 			this.gameObject.transform.localRotation = locRot;
 			this.gameObject.transform.localScale = locScale;
-			screenPoint = Camera.main.WorldToScreenPoint(transform.position);
 		}
 		print ("Number of mesh triangles: " + this.gameObject.GetComponent<MeshFilter> ().mesh.triangles.Length.ToString ());
 		cameraMovement.isObjectDragged = true;
@@ -76,9 +75,9 @@ public class ObjectEvents : MonoBehaviour {
     void OnMouseUp()
     {
 		cameraMovement.isObjectDragged = false;
-        if(GetComponentInParent<ObjectMenuEvents>())
+		if(GetComponentInParent<EnvMenu>())
         {
-            GetComponentInParent<ObjectMenuEvents>().removeCurrObject();
+			GetComponentInParent<EnvMenu>().removeCurrObject();
         }
 		this.gameObject.AddComponent<CurrentObjectEvents>();
 		Destroy (this.gameObject.GetComponent<ObjectEvents> ());
