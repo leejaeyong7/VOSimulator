@@ -27,12 +27,17 @@ public class TerrainMenu : MenuPanel{
 		terrainDropdown.onValueChanged.AddListener(delegate {
 			chooseTextureOptionType(terrainDropdown);
 		});
+        terrainDropdown.onValueChanged.Invoke(0);
     }
 	new public void Show(){
 		base.Show ();
-		terrainDropdown.onValueChanged.Invoke (0);
+        terrainDropdown.onValueChanged.Invoke (0);
 	}
-    public void loadTerrain(string type) {
+    new public void Hide()
+    {
+        base.Hide();
+        TextureOptions.Hide();
+        ReliefOptions.Hide();
     }
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //
@@ -40,17 +45,13 @@ public class TerrainMenu : MenuPanel{
     //--------------------------------------------------------------------//
     //                    PRIVATE FUNCTION DEFINITIONS                    //
     //--------------------------------------------------------------------//
-    private void UpdateTerrainTexture(int textureId)
-    {
-
-    }
 	// edit menu dropdown select event handler
 	private void chooseTextureOptionType(Dropdown target)
 	{
 		switch (target.value) {
 		case 0:
-			TextureOptions.Show ();
-			ReliefOptions.Hide ();
+            ReliefOptions.Hide();
+            TextureOptions.Show ();
 			break;
 		case 1:
 			TextureOptions.Hide();
