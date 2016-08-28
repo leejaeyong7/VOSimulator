@@ -8,6 +8,8 @@
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -16,10 +18,10 @@ using System.Collections;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class EditModeEvents : MonoBehaviour {
-    public EnvMenu objectMenuEvents;
     public ObjectEvents objEvents;
 	public GameObject selectedObject;
 	public GameObject localMenu;
+	public Canvas gui;
 	private Shader[] defaultShaders;
 	private Shader highlighter;
 	void Start(){
@@ -29,6 +31,9 @@ public class EditModeEvents : MonoBehaviour {
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
     //--------------------------------------------------------------------//
+	public bool isGUIClicked(){
+		return EventSystem.current.IsPointerOverGameObject ();
+	}
 	public void selectObject(GameObject obj){
 		// check if any object selected, if so, unselect object
 

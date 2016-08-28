@@ -24,6 +24,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
     public float transYSpeed = 1.0f;
     public EditModeEvents ev;
 	public CustomFileBrowser fb;
+	public TerrainMenu tm;
 	public bool isObjectDragged = false;
     /* Private variables */
     private Vector3 target;
@@ -108,7 +109,11 @@ public class SceneModeCameraMovement : MonoBehaviour {
         }
     }
 	bool isAbleToUpdate(){
-		return !(isObjectDragged || PanelDragHandler.isPanelDragged || fb.showFB);
+		return !(isObjectDragged || 
+			PanelDragHandler.isPanelDragged || 
+			fb.showFB ||
+			tm.isClicked || 
+			ev.isGUIClicked() );
 	}
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //

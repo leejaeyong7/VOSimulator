@@ -18,6 +18,7 @@ using System.Collections;
 //----------------------------------------------------------------------------//
 public class TerrainMenu : MenuPanel{
 	public Dropdown terrainDropdown;
+	public bool isClicked = false;
 	public TextureOptions TextureOptions;
 	public ReliefOptions ReliefOptions;
     //--------------------------------------------------------------------//
@@ -29,6 +30,9 @@ public class TerrainMenu : MenuPanel{
 		});
         terrainDropdown.onValueChanged.Invoke(0);
     }
+	void Update(){
+		isClicked = ReliefOptions.isDragging;
+	}
 	new public void Show(){
 		base.Show ();
         terrainDropdown.onValueChanged.Invoke (0);
