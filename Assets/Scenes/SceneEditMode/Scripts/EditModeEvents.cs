@@ -8,6 +8,8 @@
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -16,20 +18,25 @@ using System.Collections;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class EditModeEvents : MonoBehaviour {
-    public ObjectMenuEvents objectMenuEvents;
     public ObjectEvents objEvents;
 	public GameObject selectedObject;
+	public GameObject localMenu;
+	public Canvas gui;
 	private Shader[] defaultShaders;
 	private Shader highlighter;
 	void Start(){
 		highlighter = Shader.Find ("Custom/GlowShader");
-		print (highlighter.ToString ());
+		localMenu.SetActive (false);
 	}
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
     //--------------------------------------------------------------------//
+	public bool isGUIClicked(){
+		return EventSystem.current.IsPointerOverGameObject ();
+	}
 	public void selectObject(GameObject obj){
 		// check if any object selected, if so, unselect object
+
 		if (selectedObject) {
 			unselectObject ();
 		}
@@ -40,6 +47,7 @@ public class EditModeEvents : MonoBehaviour {
 			defaultShaders [i] = meshRenderer.materials [i].shader;
 		}
 		highlightObject ();
+		localMenu.SetActive (true);
 	}
 	public void unselectObject(){
 		if (selectedObject) {
@@ -47,6 +55,7 @@ public class EditModeEvents : MonoBehaviour {
 		}
 		defaultShaders = null;
 		selectedObject = null;
+		localMenu.SetActive (false);
 	}
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //

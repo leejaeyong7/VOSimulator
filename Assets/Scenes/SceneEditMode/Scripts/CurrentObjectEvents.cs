@@ -16,7 +16,6 @@ using System.Collections;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class CurrentObjectEvents : MonoBehaviour {
-	private bool isActive = false;
 	private bool wasActive = false;
 	private bool isMoved = false;
 	private bool rayUpdated = false;
@@ -91,7 +90,11 @@ public class CurrentObjectEvents : MonoBehaviour {
 		}
 	}
 	bool isSelected(){
-		return ev.selectedObject == this.gameObject;
+		if (ev && ev.selectedObject) {
+			return ev.selectedObject == this.gameObject;
+		} else {
+			return false;
+		}
 	}
 	//--------------------------------------------------------------------//
 	//                  END PRIVATE FUNCTION DEFINITIONS                  //

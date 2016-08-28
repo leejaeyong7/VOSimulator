@@ -47,8 +47,9 @@ public class IntroSceneEvents : MonoBehaviour {
      * @action disables unused project panel(s)
      */
     void Start()
-    {
-        GameObject.Find("NewProjectPanel").SetActive(false);
+	{
+		GameObject.Find("NewProjectPanel").SetActive(false);
+		GameObject.Find("LoadProjectPanel").SetActive(false);
     }
     //--------------------------------------------------------------------//
     //                  END PRIVATE FUNCTION DEFINITIONS                  //
