@@ -31,7 +31,7 @@ public class TerrainMenu : MenuPanel{
         terrainDropdown.onValueChanged.Invoke(0);
     }
 	void Update(){
-		isClicked = ReliefOptions.isDragging;
+		isClicked = ReliefOptions.isDragging || TextureOptions.isDragging;
 	}
 	new public void Show(){
 		base.Show ();

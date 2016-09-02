@@ -11,10 +11,6 @@ public class ReliefOptions : MenuPanel {
     // Use this for initialization
     void Start () {
 		TerrainData t = Terrain.activeTerrain.terrainData;
-		print (t.heightmapWidth.ToString ());
-		print (t.heightmapHeight.ToString ());
-		print (t.heightmapScale.ToString ());
-		print (t.heightmapResolution.ToString ());
         radius.onValueChanged.AddListener(delegate {
             setBrushRadius(radius);
         });
@@ -30,6 +26,7 @@ public class ReliefOptions : MenuPanel {
     }
     new public void Hide()
     {
+        brushTransform.gameObject.SetActive(false);
         base.Hide();
     }
     // Update is called once per frame
