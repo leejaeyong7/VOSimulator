@@ -20,6 +20,7 @@ public class EnvPanel : MenuPanel{
 	public Dropdown editMenuDropdown;
 	public TerrainMenu TerrainMenu;
 	public EnvMenu EnvMenu;
+	public PLYMenu PLYMenu;
 
 	void Start(){
 		editMenuDropdown.onValueChanged.AddListener(delegate {
@@ -53,10 +54,17 @@ public class EnvPanel : MenuPanel{
 		case 0:
 			TerrainMenu.Show ();
 			EnvMenu.Hide ();
+			PLYMenu.Hide ();
 			break;
 		case 1:
 			TerrainMenu.Hide ();
 			EnvMenu.Show ();
+			PLYMenu.Hide ();
+			break;
+		case 2:
+			TerrainMenu.Hide ();
+			EnvMenu.Hide();
+			PLYMenu.Show();
 			break;
 		default:
 			break;

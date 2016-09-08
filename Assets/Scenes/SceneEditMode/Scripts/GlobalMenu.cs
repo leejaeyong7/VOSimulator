@@ -45,18 +45,18 @@ public class GlobalMenu : MonoBehaviour {
     {
         switch (target.value)
         {
-		case 0: // Edit Panel
-			EnvPanel.Show();
-			FilePanel.Hide();
-			CameraPanel.Hide();
-			RunPanel.Hide();
-            break;
-		case 1: // File Panel
+		case 0: // File Panel
 			EnvPanel.Hide();
 			FilePanel.Show();
 			CameraPanel.Hide();
 			RunPanel.Hide();
 			break;
+		case 1: // Edit Panel
+			EnvPanel.Show();
+			FilePanel.Hide();
+			CameraPanel.Hide();
+			RunPanel.Hide();
+            break;
 		case 2: // Camera Panel
 			EnvPanel.Hide();
 			FilePanel.Hide();

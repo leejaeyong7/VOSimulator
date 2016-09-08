@@ -111,7 +111,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
 	bool isAbleToUpdate(){
 		return !(isObjectDragged || 
 			PanelDragHandler.isPanelDragged || 
-			fb.showFB ||
+			//fb.showFB ||
 			tm.isClicked || 
 			ev.isGUIClicked() );
 	}
