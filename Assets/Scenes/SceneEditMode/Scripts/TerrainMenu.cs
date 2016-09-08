@@ -61,6 +61,10 @@ public class TerrainMenu : MenuPanel{
 			TextureOptions.Hide();
 			ReliefOptions.Show();
 			break;
+		case 2:
+			TextureOptions.Hide ();
+			ReliefOptions.Hide ();
+			break;
 		default:
 			break;
 
