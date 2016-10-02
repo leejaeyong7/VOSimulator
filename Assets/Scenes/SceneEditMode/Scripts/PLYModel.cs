@@ -354,9 +354,10 @@ public class PLYModel
 				}
 				if (hasColor) {
 					if (hasAlpha) {
-						colors_r.Add (new Color (r.data [n+offset]/255, g.data [n+offset]/255, b.data [n+offset]/255,a.data[n+offset]/255));
+						colors_r.Add (new Color ((float)(r.data [n+offset])/255, (float)(g.data [n+offset])/255, 
+							(float)(b.data [n+offset])/255,(float)(a.data[n+offset])/255));
 					} else {
-						colors_r.Add (new Color (r.data [n+offset]/255, g.data [n+offset]/255, b.data [n+offset]/255,1.0f));
+						colors_r.Add (new Color ((float)(r.data [n+offset])/255, (float)(g.data [n+offset])/255, (float)(b.data [n+offset])/255,1.0f));
 					}
 				}
 			}
@@ -386,13 +387,14 @@ public class PLYModel
 			}
 			if (hasColor) {
 				if (hasAlpha) {
-					colors.Add (new Color (r.data [n+offset]/255, g.data [n+offset]/255, b.data [n+offset]/255,a.data[n+offset]/255));
+					colors.Add (new Color ((float)(r.data [n+offset])/255, (float)(g.data [n+offset])/255, 
+						(float)(b.data [n+offset])/255,(float)(a.data[n+offset])/255));
 				} else {
-					colors.Add (new Color (r.data [n+offset]/255, g.data [n+offset]/255, b.data [n+offset]/255,1.0f));
+					colors.Add (new Color ((float)(r.data [n+offset])/255, (float)(g.data [n+offset])/255, 
+						(float)(b.data [n+offset])/255,1.0f));
 				}
 			}
 		}
-
 		Mesh mesh = new Mesh ();
 		mesh.vertices = vertices.ToArray ();
 		if (hasNormal) {
@@ -401,6 +403,8 @@ public class PLYModel
 		if (hasColor) {
 			mesh.colors = colors.ToArray ();
 		}
+		UnityEngine.Debug.Log (mesh.colors[0].ToString());
+		Console.Write (mesh.colors[0].ToString());
 		mesh.SetIndices (indices, MeshTopology.Points, 0);
 		meshes.Add (mesh);
 
@@ -463,7 +467,7 @@ public class PLYModel
 		}
 
 		// not implemented yet!
-		property<int> material_index = (property<int>)vertex.properties.Find (p=>p.name == "material_index");
+//		property<int> material_index = (property<int>)vertex.properties.Find (p=>p.name == "material_index");
 
 
 		// parse face if exists
