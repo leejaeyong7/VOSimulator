@@ -18,15 +18,16 @@ using System.Collections;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class EditModeEvents : MonoBehaviour {
-    public ObjectEvents objEvents;
 	public GameObject selectedObject;
-	public GameObject localMenu;
+	public LocalMenu localMenu;
+	public PreviewMenu previewMenu;
 	public Canvas gui;
 	private Shader[] defaultShaders;
 	private Shader highlighter;
 	void Start(){
 		highlighter = Shader.Find ("Custom/GlowShader");
-		localMenu.SetActive (false);
+		localMenu.Hide ();
+		previewMenu.Hide();
 	}
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //
@@ -47,7 +48,7 @@ public class EditModeEvents : MonoBehaviour {
 			defaultShaders [i] = meshRenderer.materials [i].shader;
 		}
 		highlightObject ();
-		localMenu.SetActive (true);
+		localMenu.Show ();
 	}
 	public void unselectObject(){
 		if (selectedObject) {
@@ -55,7 +56,7 @@ public class EditModeEvents : MonoBehaviour {
 		}
 		defaultShaders = null;
 		selectedObject = null;
-		localMenu.SetActive (false);
+		localMenu.Hide();
 	}
     //--------------------------------------------------------------------//
     //                  END PUBLIC FUNCTION DEFINITIONS                   //
