@@ -24,6 +24,7 @@
 
 #include "Optimizer.h"
 #include "ORBmatcher.h"
+#include <syscall.h>
 
 #include<thread>
 
@@ -41,20 +42,52 @@ Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iteration
     mMaxIterations = iterations;
 }
 
+void Initializer::DisplayVector(std::vector<int> v) {
+    for (std::vector<int>::const_iterator i = v.begin(); i != v.end(); i++) {
+        cout << *i << endl;
+    }
+}
+
+void Initializer::DisplayKeypointVector(std::vector<cv::KeyPoint> v, int uid) {
+    FILE * pFile = fopen(strcat((char*)std::to_string(mnId).c_str(), strcat((char *)std::to_string(uid).c_str(), "_load_kps.out")), "a"); 
+    for (std::vector<cv::KeyPoint>::const_iterator i = v.begin(); i != v.end(); i++) {
+        char output[500];
+        sprintf(output, "(%s,%s) - %s\n",
+            std::to_string((*i).pt.x).c_str(),
+            std::to_string((*i).pt.y).c_str(),
+            std::to_string((*i).class_id).c_str()
+            );
+        fputs(output, pFile);
+        cout << "(" << (*i).pt.x << "," << (*i).pt.y << ") - " << (*i).class_id << endl;
+    }
+    fclose(pFile);
+}
+
 bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatches12, cv::Mat &R21, cv::Mat &t21,
-                             vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated)
+                             vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, int verboseLevel)
 {
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Starting Initialize - " << CurrentFrame.mnId << endl;
+        cout << "Initializer::Initialize: Start of function - mvKeys2.size(): " << mvKeys2.size() << endl;
+    }
     // Fill structures with current keypoints and matches with reference frame
     // Reference Frame: 1, Current Frame: 2
     mvKeys2 = CurrentFrame.mvKeysUn;
-
+    mnId = CurrentFrame.mnId;
     mvMatches12.clear();
     mvMatches12.reserve(mvKeys2.size());
     mvbMatched1.resize(mvKeys1.size());
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Starting matches with current keypoints and matches with reference frame. mvKeys1.size(): " << 
+            mvKeys2.size() << " mvKeys2.size(): " << mvKeys2.size() << endl;
+    }
     for(size_t i=0, iend=vMatches12.size();i<iend; i++)
     {
         if(vMatches12[i]>=0)
         {
+            // if (verboseLevel >= 5) {
+            //     cout << syscall(SYS_gettid) << ": Initializer: Initialize: Making pair: (" << i << "," <<  vMatches12[i] << ")" << endl;
+            // }
             mvMatches12.push_back(make_pair(i,vMatches12[i]));
             mvbMatched1[i]=true;
         }
@@ -69,6 +102,9 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     vAllIndices.reserve(N);
     vector<size_t> vAvailableIndices;
 
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Starting Indices for minimum set selection." << endl;
+    }
     for(int i=0; i<N; i++)
     {
         vAllIndices.push_back(i);
@@ -101,8 +137,8 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     float SH, SF;
     cv::Mat H, F;
 
-    thread threadH(&Initializer::FindHomography,this,ref(vbMatchesInliersH), ref(SH), ref(H));
-    thread threadF(&Initializer::FindFundamental,this,ref(vbMatchesInliersF), ref(SF), ref(F));
+    thread threadH(&Initializer::FindHomography,this,ref(vbMatchesInliersH), ref(SH), ref(H), ref(verboseLevel));
+    thread threadF(&Initializer::FindFundamental,this,ref(vbMatchesInliersF), ref(SF), ref(F), ref(verboseLevel));
 
     // Wait until both threads have finished
     threadH.join();
@@ -112,16 +148,25 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     float RH = SH/(SH+SF);
 
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
-    if(RH>0.40)
-        return ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
-    else //if(pF_HF>0.6)
-        return ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50);
-
+    if(RH>0.40) {
+        bool h_reconstruction = ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50, verboseLevel);
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Initializer: Initialize: After ReconstructH, mvKeys2.size(): " << mvKeys2.size() << endl;
+        }
+        return h_reconstruction;
+    }
+    else {
+        bool f_reconstruction = ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50, verboseLevel);
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Initializer: Initialize: After ReconstructF, mvKeys2.size(): " << mvKeys2.size() << endl;
+        }
+        return f_reconstruction;
+    }
     return false;
 }
 
 
-void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21)
+void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21, int verboseLevel)
 {
     // Number of putative matches
     const int N = mvMatches12.size();
@@ -172,7 +217,7 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
 }
 
 
-void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, cv::Mat &F21)
+void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, cv::Mat &F21, int verboseLevel)
 {
     // Number of putative matches
     const int N = vbMatchesInliers.size();
@@ -468,7 +513,7 @@ float Initializer::CheckFundamental(const cv::Mat &F21, vector<bool> &vbMatchesI
 }
 
 bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv::Mat &K,
-                            cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
+                            cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated, int verboseLevel)
 {
     int N=0;
     for(size_t i=0, iend = vbMatchesInliers.size() ; i<iend; i++)
@@ -570,7 +615,7 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
 }
 
 bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv::Mat &K,
-                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
+                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated, int verboseLevel)
 {
     int N=0;
     for(size_t i=0, iend = vbMatchesInliers.size() ; i<iend; i++)

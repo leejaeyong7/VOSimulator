@@ -74,7 +74,7 @@ public:
 
     cv::Mat GetDescriptor();
 
-    void UpdateNormalAndDepth();
+    void UpdateNormalAndDepth(bool load_tracks = false, int verboseLevel = 0);
 
     float GetMinDistanceInvariance();
     float GetMaxDistanceInvariance();
@@ -108,6 +108,7 @@ public:
     cv::Mat mPosGBA;
     long unsigned int mnBAGlobalForKF;
 
+    long int mClassId;
 
     static std::mutex mGlobalMutex;
 

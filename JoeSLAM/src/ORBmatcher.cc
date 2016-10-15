@@ -42,12 +42,13 @@ ORBmatcher::ORBmatcher(float nnratio, bool checkOri): mfNNratio(nnratio), mbChec
 {
 }
 
-int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoints, const float th)
+int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoints, const float th, int verboseLevel)
 {
     int nmatches=0;
 
     const bool bFactor = th!=1.0;
 
+    FILE * pFile = fopen(strcat((char *)std::to_string(F.mnId).c_str(), ".out"), "a"); // F2 = CurrentFrame
     for(size_t iMP=0; iMP<vpMapPoints.size(); iMP++)
     {
         MapPoint* pMP = vpMapPoints[iMP];
@@ -122,9 +123,22 @@ int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint*> &vpMapPoint
 
             F.mvpMapPoints[bestIdx]=pMP;
             nmatches++;
+            F.mvKeysUn[bestIdx].class_id = pMP->mClassId;
+
+
+            char output[500];
+            sprintf(output, "########################\n%s\n%s\n%s,%s\n%s\n%s\n%s,%s\n",
+                std::to_string(F.mnId).c_str(),
+                std::to_string(F.mvKeysUn[bestIdx].class_id).c_str(),
+                std::to_string(F.mvKeysUn[bestIdx].pt.x).c_str(), std::to_string(F.mvKeysUn[bestIdx].pt.y).c_str(),
+                std::to_string(pMP->mnId).c_str(),
+                std::to_string(pMP->mClassId).c_str(),
+                std::to_string(pMP->mTrackProjX).c_str(),std::to_string(pMP->mTrackProjY).c_str()
+                );
+            fputs(output, pFile);
         }
     }
-
+    fclose(pFile);
     return nmatches;
 }
 
@@ -287,7 +301,7 @@ int ORBmatcher::SearchByBoW(KeyFrame* pKF,Frame &F, vector<MapPoint*> &vpMapPoin
     return nmatches;
 }
 
-int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapPoint*> &vpPoints, vector<MapPoint*> &vpMatched, int th)
+int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapPoint*> &vpPoints, vector<MapPoint*> &vpMatched, int th, int verboseLevel)
 {
     // Get Calibration Parameters for later projection
     const float &fx = pKF->fx;
@@ -402,7 +416,138 @@ int ORBmatcher::SearchByProjection(KeyFrame* pKF, cv::Mat Scw, const vector<MapP
     return nmatches;
 }
 
-int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f> &vbPrevMatched, vector<int> &vnMatches12, int windowSize)
+int ORBmatcher::LoadInitializationTracks(Initializer* mpInitializer, Frame &F1, Frame &F2, vector<cv::Point2f> &vbPrevMatched, vector<int> &vnMatches12, int windowSize, int verboseLevel)
+{
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: Start of function: F1.mvKeysUn.size(): " << F1.mvKeysUn.size() << " F2.mvKeysUn.size(): " << F2.mvKeysUn.size() << endl;
+    }
+
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: 1 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+    }
+    int nmatches=0;
+    vnMatches12 = vector<int>(F1.mvKeysUn.size(),-1);
+    vector<int> vnMatches21(F2.mvKeysUn.size(),-1);
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: HISTO_LENGTH: " << HISTO_LENGTH << endl;
+    }
+    const float factor = 1.0f/HISTO_LENGTH;
+    vector<int> rotHist[HISTO_LENGTH];
+    for(int i=0;i<HISTO_LENGTH;i++)
+        rotHist[i].reserve(500);
+
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: 2 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+    }
+    // ####################################################################################################
+    int counter = 0;
+    int rawCounter = 0;
+    for(int j = 0; j < F2.mvKeysUn.size(); j++) {
+        for(int i = 0; i < F1.mvKeysUn.size(); i++) {
+            if (F1.mvKeysUn[i].class_id <= 0 || F2.mvKeysUn[j].class_id <= 0)
+                rawCounter++;
+            // cout << "ORBmatcher: LoadInitializationTracks: F1_kp: " << i << " ClassId: " << F1.mvKeysUn[i].class_id << " F2_kp: " << j << " ClassId: " << F2.mvKeysUn[j].class_id << endl;
+            if (F1.mvKeysUn[i].class_id == F2.mvKeysUn[j].class_id) {
+                // if (verboseLevel >= 5) {
+                //     cout << "ORBmatcher: LoadInitializationTracks: F1.mvKeysUn[" << i << "].class_id = F2.mvKeysUn[" << j << "].class_id = " << F1.mvKeysUn[i].class_id << " - " << F2.mvKeysUn[j].class_id << endl;
+                //     cout << "ORBmatcher: LoadInitializationTracks: F1.mvKeysUn[" << i << "] = " <<  F1.mvKeysUn[i].pt.x << "," << F1.mvKeysUn[i].pt.y << " F2.mvKeysUn[" << j << "] = " << F2.mvKeysUn[j].pt.x << "," << F2.mvKeysUn[j].pt.y << endl;
+                // }
+                counter++;
+                vnMatches12[i] = j;
+                vnMatches21[j] = i;
+                
+
+                nmatches++;
+
+                if(mbCheckOrientation)
+                {
+                    float rot = F1.mvKeysUn[i].angle-F2.mvKeysUn[j].angle;
+                    if(rot<0.0)
+                        rot+=360.0f;
+                    int bin = round(rot*factor);
+                    if(bin==HISTO_LENGTH)
+                        bin=0;
+                    assert(bin>=0 && bin<HISTO_LENGTH);
+                    rotHist[bin].push_back(i);
+                }
+                continue;
+            }
+            // if (F2.mnId = 45 && F2.mvKeysUn[j].class_id == 2527 && i == F1.mvKeysUn.size() - 1) {
+            //     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+            //     cout << F2.mnId << "  -  " << F2.mvKeysUn[j].class_id << endl;
+            //     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+            // }
+        }
+    }
+    // ####################################################################################################
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: 3 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+    }
+    if(mbCheckOrientation)
+    {
+        int ind1=-1;
+        int ind2=-1;
+        int ind3=-1;
+
+        ComputeThreeMaxima(rotHist,HISTO_LENGTH,ind1,ind2,ind3);
+
+        for(int i=0; i<HISTO_LENGTH; i++)
+        {
+            if(i==ind1 || i==ind2 || i==ind3)
+                continue;
+            for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
+            {
+                int idx1 = rotHist[i][j];
+                if(vnMatches12[idx1]>=0)
+                {
+                    vnMatches12[idx1]=-1;
+                    nmatches--;
+                }
+            }
+        }
+    }
+
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: 4 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+    }
+    //Update prev matched
+    for(size_t i1=0, iend1=vnMatches12.size(); i1<iend1; i1++) {
+        if(vnMatches12[i1]>=0) {
+            vbPrevMatched[i1]=F2.mvKeysUn[vnMatches12[i1]].pt;
+            if (verboseLevel >= 5) {
+                cout << "ORBmatcher: LoadInitializationTracks: vbPrevMatched.size(): " << vbPrevMatched.size() << " vnMatches12[i1] = " << vnMatches12[i1] << "  F2.mvKeysUn[vnMatches12[" << i1 << "]].pt = (" << F2.mvKeysUn[vnMatches12[i1]].pt.x << "," << F2.mvKeysUn[vnMatches12[i1]].pt.y  << ")" << endl;
+                cout << "ORBmatcher: LoadInitializationTracks: 4.5 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+            }
+        }
+    }
+
+    // if (verboseLevel >= 5) {
+    //     cout << "ORBmatcher: LoadInitializationTracks: $$$$$$$$$$$$ counter $$$$$$$$$$$$: " << counter << "  -  " << rawCounter << endl;
+    //     cout << "ORBmatcher: LoadInitializationTracks: nmatches: " << nmatches << endl;
+    //     cout << "ORBmatcher: LoadInitializationTracks: vnMatches12.size(): " << vnMatches12.size() << endl;
+    //     cout << "ORBmatcher: LoadInitializationTracks: F1.mvKeysUn.size()" << F1.mvKeysUn.size() << endl;
+    //     for (int i5 = 0; i5 < vnMatches12.size(); i5++) {
+    //         cout << i5 << " - " << vnMatches12[i5] << endl;    
+    //     }
+    //     for (int i6 = 0; i6 < vnMatches21.size(); i6++) {
+    //         cout << i6 << " - " << vnMatches21[i6] << endl;    
+    //     }
+    //     cout << "ORBmatcher: LoadInitializationTracks: Done" << endl;
+
+    // }
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: 5 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+    }
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: LoadInitializationTracks: End of function: F1.mvKeysUn.size(): " << F1.mvKeysUn.size() << " F2.mvKeysUn.size(): " << F2.mvKeysUn.size() << endl;
+        cout << "ORBmatcher: LoadInitializationTracks: End of function: F1.mvKeys.size(): " << F1.mvKeys.size() << " F2.mvKeys.size(): " << F2.mvKeys.size() << endl;
+        cout << "ORBmatcher: LoadInitializationTracks: End of function: vnMatches12.size(): " << vnMatches12.size() << " vbPrevMatched.size(): " << vbPrevMatched.size() << " vnMatches21.size(): " << vnMatches21.size() << endl;
+
+    }
+    return nmatches;
+}
+
+int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f> &vbPrevMatched, vector<int> &vnMatches12, int windowSize, int verboseLevel)
 {
     int nmatches=0;
     vnMatches12 = vector<int>(F1.mvKeysUn.size(),-1);
@@ -415,6 +560,10 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
     vector<int> vMatchedDistance(F2.mvKeysUn.size(),INT_MAX);
     vector<int> vnMatches21(F2.mvKeysUn.size(),-1);
 
+    FILE * pFile = fopen(strcat((char *)std::to_string(F2.mnId).c_str(), ".out"), "w"); // F2 = CurrentFrame
+    if (verboseLevel >= 5) {
+        cout << "ORBmatcher: SearchForInitialization: Frame1 Points: " << F1.mvKeysUn.size() << " Frame2 Points: " << F2.mvKeysUn.size() << " vbPrevMatched.size(): " << vbPrevMatched.size() << endl;
+    }
     for(size_t i1=0, iend1=F1.mvKeysUn.size(); i1<iend1; i1++)
     {
         cv::KeyPoint kp1 = F1.mvKeysUn[i1];
@@ -469,6 +618,18 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
                 vnMatches21[bestIdx2]=i1;
                 vMatchedDistance[bestIdx2]=bestDist;
                 nmatches++;
+                F2.mvKeysUn[bestIdx2].class_id = F1.mvKeysUn[i1].class_id;
+
+                // char output[500];
+                // sprintf(output, "!!!!!!!!!!!!!!!!!!!!!!!!\n%s\n%s\n%s,%s\n%s\n%s\n%s,%s\n",
+                //     std::to_string(F2.mnId).c_str(),
+                //     std::to_string(F2.mvKeysUn[bestIdx2].class_id).c_str(),
+                //     std::to_string(F2.mvKeysUn[bestIdx2].pt.x).c_str(), std::to_string(F2.mvKeysUn[bestIdx2].pt.y).c_str(),
+                //     std::to_string(F1.mnId).c_str(),
+                //     std::to_string(F1.mvKeysUn[i1].class_id).c_str(),
+                //     std::to_string(F1.mvKeysUn[i1].pt.x).c_str(),std::to_string(F1.mvKeysUn[i1].pt.y).c_str()
+                //     );
+                // fputs(output, pFile);
 
                 if(mbCheckOrientation)
                 {
@@ -512,10 +673,23 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
     }
 
     //Update prev matched
-    for(size_t i1=0, iend1=vnMatches12.size(); i1<iend1; i1++)
-        if(vnMatches12[i1]>=0)
+    for(size_t i1=0, iend1=vnMatches12.size(); i1<iend1; i1++) {
+        if(vnMatches12[i1]>=0) {
             vbPrevMatched[i1]=F2.mvKeysUn[vnMatches12[i1]].pt;
 
+            char output[500];
+            sprintf(output, "!!!!!!!!!!!!!!!!!!!!!!!!\n%s\n%s\n%s,%s\n%s\n%s\n%s,%s\n",
+                std::to_string(F2.mnId).c_str(),
+                std::to_string(F2.mvKeysUn[vnMatches12[i1]].class_id).c_str(),
+                std::to_string(F2.mvKeysUn[vnMatches12[i1]].pt.x).c_str(), std::to_string(F2.mvKeysUn[vnMatches12[i1]].pt.y).c_str(),
+                std::to_string(F1.mnId).c_str(),
+                std::to_string(F1.mvKeysUn[i1].class_id).c_str(),
+                std::to_string(F1.mvKeysUn[i1].pt.x).c_str(),std::to_string(F1.mvKeysUn[i1].pt.y).c_str()
+                );
+            fputs(output, pFile);
+        }
+    }
+    fclose(pFile);
     return nmatches;
 }
 
@@ -822,7 +996,7 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
     return nmatches;
 }
 
-int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const float th)
+int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const float th, int verboseLevel)
 {
     cv::Mat Rcw = pKF->GetRotation();
     cv::Mat tcw = pKF->GetTranslation();
@@ -974,7 +1148,7 @@ int ORBmatcher::Fuse(KeyFrame *pKF, const vector<MapPoint *> &vpMapPoints, const
     return nFused;
 }
 
-int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
+int ORBmatcher::Fuse(KeyFrame *pKF, cv::Mat Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint, int verboseLevel)
 {
     // Get Calibration Parameters for later projection
     const float &fx = pKF->fx;
@@ -1325,7 +1499,74 @@ int ORBmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &
     return nFound;
 }
 
-int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
+int ORBmatcher::LoadTracks(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono, int verboseLevel)
+{
+    if (verboseLevel >= 2) {
+        cout << "ORBmatcher::LoadTracks" << endl;
+    }
+    int nmatches = 0;
+
+    // Rotation Histogram (to check rotation consistency)
+    vector<int> rotHist[HISTO_LENGTH];
+    for(int i=0;i<HISTO_LENGTH;i++)
+        rotHist[i].reserve(500);
+    const float factor = 1.0f/HISTO_LENGTH;
+
+    // -------------------------------------------------------------------------------------
+    for(int i=0; i<LastFrame.N; i++)
+    {
+        MapPoint* pMP = LastFrame.mvpMapPoints[i];
+
+        if(pMP)
+        {
+            if(!LastFrame.mvbOutlier[i])
+            {
+
+    
+
+
+                if (verboseLevel >= 5) {
+                    cout << "*****" << pMP->mClassId << "*****" << endl;
+                }
+
+
+
+            }
+        }
+    }
+
+
+
+
+
+    // -------------------------------------------------------------------------------------
+    //Apply rotation consistency
+    if(mbCheckOrientation)
+    {
+        int ind1=-1;
+        int ind2=-1;
+        int ind3=-1;
+
+        ComputeThreeMaxima(rotHist,HISTO_LENGTH,ind1,ind2,ind3);
+
+        for(int i=0; i<HISTO_LENGTH; i++)
+        {
+            if(i!=ind1 && i!=ind2 && i!=ind3)
+            {
+                for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
+                {
+                    CurrentFrame.mvpMapPoints[rotHist[i][j]]=static_cast<MapPoint*>(NULL);
+                    nmatches--;
+                }
+            }
+        }
+    }
+
+    return nmatches;
+
+}
+
+int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono, int verboseLevel)
 {
     int nmatches = 0;
 
@@ -1428,6 +1669,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                 {
                     CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
                     nmatches++;
+                    CurrentFrame.mvKeysUn[bestIdx2].class_id = LastFrame.mvKeysUn[i].class_id;
 
                     if(mbCheckOrientation)
                     {
@@ -1439,30 +1681,19 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                             bin=0;
                         assert(bin>=0 && bin<HISTO_LENGTH);
                         rotHist[bin].push_back(bestIdx2);
-
-                        char output[500];
-                        cv::Mat worldPos = LastFrame.mvpMapPoints[i]->GetWorldPos();
-                        cv::Mat mDescriptor = LastFrame.mvpMapPoints[i]->GetDescriptor();
-                        sprintf(output, "************************\n%s,%s\n %s,%s\n%s,%s\n %s,%s\n%s,%s,%s\n[%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s]\n",
-                            std::to_string(CurrentFrame.mnId).c_str(), std::to_string(CurrentFrame.mvKeysUn.size()).c_str(),
-                            std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.x).c_str(), std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.y).c_str(),
-                            std::to_string(LastFrame.mnId).c_str(), std::to_string(LastFrame.mvKeysUn.size()).c_str(),
-                            std::to_string(LastFrame.mvKeysUn[i].pt.x).c_str(),std::to_string(LastFrame.mvKeysUn[i].pt.y).c_str(),
-                            std::to_string(worldPos.at<float>(0)).c_str(),std::to_string(worldPos.at<float>(1)).c_str(),std::to_string(worldPos.at<float>(2)).c_str(),
-                            std::to_string((int)(mDescriptor.data[0])).c_str(),std::to_string((int)(mDescriptor.data[1])).c_str(),std::to_string((int)(mDescriptor.data[2])).c_str(),
-                            std::to_string((int)(mDescriptor.data[3])).c_str(),std::to_string((int)(mDescriptor.data[4])).c_str(),std::to_string((int)(mDescriptor.data[5])).c_str(),
-                            std::to_string((int)(mDescriptor.data[6])).c_str(),std::to_string((int)(mDescriptor.data[7])).c_str(),std::to_string((int)(mDescriptor.data[8])).c_str(),
-                            std::to_string((int)(mDescriptor.data[9])).c_str(),std::to_string((int)(mDescriptor.data[10])).c_str(),std::to_string((int)(mDescriptor.data[11])).c_str(),
-                            std::to_string((int)(mDescriptor.data[12])).c_str(),std::to_string((int)(mDescriptor.data[13])).c_str(),std::to_string((int)(mDescriptor.data[14])).c_str(),
-                            std::to_string((int)(mDescriptor.data[15])).c_str(),std::to_string((int)(mDescriptor.data[16])).c_str(),std::to_string((int)(mDescriptor.data[17])).c_str(),
-                            std::to_string((int)(mDescriptor.data[18])).c_str(),std::to_string((int)(mDescriptor.data[19])).c_str(),std::to_string((int)(mDescriptor.data[20])).c_str(),
-                            std::to_string((int)(mDescriptor.data[21])).c_str(),std::to_string((int)(mDescriptor.data[22])).c_str(),std::to_string((int)(mDescriptor.data[23])).c_str(),
-                            std::to_string((int)(mDescriptor.data[24])).c_str(),std::to_string((int)(mDescriptor.data[25])).c_str(),std::to_string((int)(mDescriptor.data[26])).c_str(),
-                            std::to_string((int)(mDescriptor.data[27])).c_str(),std::to_string((int)(mDescriptor.data[28])).c_str(),std::to_string((int)(mDescriptor.data[29])).c_str(),
-                            std::to_string((int)(mDescriptor.data[30])).c_str(),std::to_string((int)(mDescriptor.data[31])).c_str()
-                            );
-                        fputs(output, pFile);
                     }
+                    char output[500];
+                    cv::Mat worldPos = LastFrame.mvpMapPoints[i]->GetWorldPos();
+                    cv::Mat mDescriptor = LastFrame.mvpMapPoints[i]->GetDescriptor();
+                    sprintf(output, "------------------------\n%s\n%s\n%s,%s\n%s\n%s\n%s,%s\n",
+                        std::to_string(CurrentFrame.mnId).c_str(),
+                        std::to_string(CurrentFrame.mvKeysUn[bestIdx2].class_id).c_str(),
+                        std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.x).c_str(), std::to_string(CurrentFrame.mvKeysUn[bestIdx2].pt.y).c_str(),
+                        std::to_string(LastFrame.mnId).c_str(),
+                        std::to_string(LastFrame.mvKeysUn[i].class_id).c_str(),
+                        std::to_string(LastFrame.mvKeysUn[i].pt.x).c_str(),std::to_string(LastFrame.mvKeysUn[i].pt.y).c_str()
+                        );
+                    fputs(output, pFile);
                 }
             }
         }
@@ -1494,7 +1725,154 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
     return nmatches;
 }
 
-int ORBmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const int ORBdist)
+int ORBmatcher::SearchByProjectionUsingTracks(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono, int verboseLevel)
+{
+    if (verboseLevel >= 4) {
+        cout << "3 ---------- " << "SearchByProjection" << endl;
+    }
+    int nmatches = 0;
+
+    // Rotation Histogram (to check rotation consistency)
+    vector<int> rotHist[HISTO_LENGTH];
+    for(int i=0;i<HISTO_LENGTH;i++)
+        rotHist[i].reserve(500);
+    const float factor = 1.0f/HISTO_LENGTH;
+
+    const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0,3).colRange(0,3);
+    const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0,3).col(3);
+
+    const cv::Mat twc = -Rcw.t()*tcw;
+
+    const cv::Mat Rlw = LastFrame.mTcw.rowRange(0,3).colRange(0,3);
+    const cv::Mat tlw = LastFrame.mTcw.rowRange(0,3).col(3);
+
+    const cv::Mat tlc = Rlw*twc+tlw;
+
+    const bool bForward = tlc.at<float>(2)>CurrentFrame.mb && !bMono;
+    const bool bBackward = -tlc.at<float>(2)>CurrentFrame.mb && !bMono;
+
+    for(int i=0; i<LastFrame.N; i++)
+    {
+        MapPoint* pMP = LastFrame.mvpMapPoints[i];
+
+        if(pMP)
+        {
+            if(!LastFrame.mvbOutlier[i])
+            {
+                // Project
+                cv::Mat x3Dw = pMP->GetWorldPos();
+                cv::Mat x3Dc = Rcw*x3Dw+tcw;
+
+                const float xc = x3Dc.at<float>(0);
+                const float yc = x3Dc.at<float>(1);
+                const float invzc = 1.0/x3Dc.at<float>(2);
+
+                if(invzc<0)
+                    continue;
+
+                float u = CurrentFrame.fx*xc*invzc+CurrentFrame.cx;
+                float v = CurrentFrame.fy*yc*invzc+CurrentFrame.cy;
+
+                if(u<CurrentFrame.mnMinX || u>CurrentFrame.mnMaxX)
+                    continue;
+                if(v<CurrentFrame.mnMinY || v>CurrentFrame.mnMaxY)
+                    continue;
+
+                int nLastOctave = LastFrame.mvKeys[i].octave;
+
+                // Search in a window. Size depends on scale
+                float radius = th*CurrentFrame.mvScaleFactors[nLastOctave];
+
+                vector<size_t> vIndices2;
+
+                if(bForward)
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
+                else if(bBackward)
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
+                else
+                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave-1, nLastOctave+1);
+
+                if(vIndices2.empty())
+                    continue;
+
+                const cv::Mat dMP = pMP->GetDescriptor();
+
+                int bestDist = 256;
+                int bestIdx2 = -1;
+
+                for(vector<size_t>::const_iterator vit=vIndices2.begin(), vend=vIndices2.end(); vit!=vend; vit++)
+                {
+                    const size_t i2 = *vit;
+                    if(CurrentFrame.mvpMapPoints[i2])
+                        if(CurrentFrame.mvpMapPoints[i2]->Observations()>0)
+                            continue;
+
+                    if(CurrentFrame.mvuRight[i2]>0)
+                    {
+                        const float ur = u - CurrentFrame.mbf*invzc;
+                        const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
+                        if(er>radius)
+                            continue;
+                    }
+
+                    const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
+
+                    const int dist = DescriptorDistance(dMP,d);
+
+                    if(dist<bestDist)
+                    {
+                        bestDist=dist;
+                        bestIdx2=i2;
+                    }
+                }
+
+                if(bestDist<=TH_HIGH)
+                {
+                    CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
+                    nmatches++;
+
+                    if(mbCheckOrientation)
+                    {
+                        float rot = LastFrame.mvKeysUn[i].angle-CurrentFrame.mvKeysUn[bestIdx2].angle;
+                        if(rot<0.0)
+                            rot+=360.0f;
+                        int bin = round(rot*factor);
+                        if(bin==HISTO_LENGTH)
+                            bin=0;
+                        assert(bin>=0 && bin<HISTO_LENGTH);
+                        rotHist[bin].push_back(bestIdx2);
+                    }
+                }
+            }
+        }
+    }
+
+    //Apply rotation consistency
+    if(mbCheckOrientation)
+    {
+        int ind1=-1;
+        int ind2=-1;
+        int ind3=-1;
+
+        ComputeThreeMaxima(rotHist,HISTO_LENGTH,ind1,ind2,ind3);
+
+        for(int i=0; i<HISTO_LENGTH; i++)
+        {
+            if(i!=ind1 && i!=ind2 && i!=ind3)
+            {
+                for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
+                {
+                    CurrentFrame.mvpMapPoints[rotHist[i][j]]=static_cast<MapPoint*>(NULL);
+                    nmatches--;
+                }
+            }
+        }
+    }
+
+    return nmatches;
+}
+
+int ORBmatcher::SearchByProjection(Frame &CurrentFrame, KeyFrame *pKF, const set<MapPoint*> &sAlreadyFound, const float th , const int ORBdist, int verboseLevel)
 {
     int nmatches = 0;
 

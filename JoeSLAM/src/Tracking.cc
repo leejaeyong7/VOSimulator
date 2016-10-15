@@ -34,7 +34,7 @@
 #include"PnPsolver.h"
 
 #include<iostream>
-
+#include <syscall.h>
 #include<mutex>
 
 
@@ -235,7 +235,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 }
 
 
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path)
+cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path, int verboseLevel)
 {
     mImGray = im;
 
@@ -259,13 +259,187 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp,
     else
         mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
-    Track(frame_img_path);
+    Track(frame_img_path,false, verboseLevel);
 
     return mCurrentFrame.mTcw.clone();
 }
 
-void Tracking::Track(const string frame_img_path)
+bool Tracking::hasKeypoint(std::vector<cv::KeyPoint> keys, int classId) 
 {
+    for (int i = 0; i < keys.size(); i++) {
+        if (keys[i].class_id == classId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Tracking::AddKeypoint(std::vector<cv::KeyPoint> keys, cv::KeyPoint keypoint) 
+{
+    cv::KeyPoint kpt;
+    kpt.pt.x = keypoint.pt.x;
+    kpt.pt.y = keypoint.pt.y;
+    kpt.class_id = keypoint.class_id;
+    keys.push_back(kpt);
+}
+
+cv::Mat Tracking::GrabTracks(const double &timestamp, const string frame_img_path, const int verboseLevel, const cv::Mat &im)
+{   
+    if (verboseLevel >= 5) {
+        cout << "Tracking: GrabTracks: Starting to convert images to grayscale" << endl;
+        cout << "Tracking: GrabTracks: im.channels(): " << im.channels() << endl;
+    }
+
+    mImGray = im;
+    // if(mImGray.channels()==3)
+    // {
+    //     if(mbRGB)
+    //         cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+    //     else
+    //         cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+    // }
+    // else if(mImGray.channels()==4)
+    // {
+    //     if(mbRGB)
+    //         cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+    //     else
+    //         cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+    // }
+    if (verboseLevel >= 5) {
+        cout << "Tracking: GrabTracks: Done converting images to grayscale" << endl;
+    }
+
+    std::vector<cv::KeyPoint> frameA;
+    std::vector<cv::KeyPoint> frameB;
+    // int mnId = mCurrentFrame.mnId;
+    int mnId = Frame::nNextId;
+    int frameAmnId = -1;
+    int frameBmnId = -1;
+    int lineCount = 0;
+    int kpBFrameBCnt = 0;
+    int kpBInitialFrameCnt = 0;
+    int kpBLastFrameCnt = 0;
+    char* fn = NULL;
+    if (mnId == 0) {
+        fn = "1.out";
+    } else {
+        fn = strcat((char *)std::to_string(mnId).c_str(), ".out");
+    }
+    ifstream trackFile(fn, std::ifstream::in);
+    cout << "$$$$$$$$$$$$$$$$$" << endl;
+    cout << strcat((char *)std::to_string(mnId).c_str(), ".out") << endl;
+    cout << "$$$$$$$$$$$$$$$$$" << endl;
+    if(!trackFile.fail()){
+        int classId = -1;
+        for( std::string line; getline( trackFile, line ); ) {
+            if (lineCount % 7 == 1) { // FrameId
+                frameAmnId = std::stoi(line);
+            } else if (lineCount % 7 == 2) { // ClassId
+                classId = std::stoi(line);
+            } else if (lineCount % 7 == 3) { // Keypoint for FrameA
+                cv::KeyPoint kpA;
+                std::istringstream ss(line);
+                std::string token;
+                std::getline(ss, token, ',');
+                kpA.pt.x = std::stof(token);
+                std::getline(ss, token, ',');
+                kpA.pt.y = std::stof(token);
+                kpA.class_id = classId;
+                if (frameAmnId == mnId) {
+                    frameA.push_back(kpA);
+                }
+            } else if (lineCount % 7 == 4) { // Matching FrameId
+                frameBmnId = std::stoi(line);
+            } else if (lineCount % 7 == 5) { // ClassId
+                classId = std::stoi(line);
+            } else if (lineCount % 7 == 6) { // Keypoint for FrameB
+                cv::KeyPoint kpB;
+                std::istringstream ss(line);
+                std::string token;
+                std::getline(ss, token, ',');
+                kpB.pt.x = std::stof(token);
+                std::getline(ss, token, ',');
+                kpB.pt.y = std::stof(token);
+                kpB.class_id = classId;
+                frameB.push_back(kpB);
+                
+                if (frameBmnId == mnId) {
+                    frameA.push_back(kpB);
+                    lineCount++;
+                    kpBFrameBCnt++;
+                    continue;
+                }
+                if (frameBmnId == mInitialFrame.mnId && !hasKeypoint(mInitialFrame.mvKeysUn, kpB.class_id)) {
+                    mInitialFrame.mvKeysUn.push_back(kpB);
+                    mInitialFrame.mvKeys.push_back(kpB);
+                    lineCount++;
+                    kpBInitialFrameCnt++;
+                    // AddKeypoint(mInitialFrame.mvKeys, kpB);
+                    continue;
+                }
+                if ((mInitialFrame.mnId != mLastFrame.mnId) && (frameBmnId == mLastFrame.mnId) && !hasKeypoint(mLastFrame.mvKeysUn, kpB.class_id)) {
+                    mLastFrame.mvKeysUn.push_back(kpB);
+                    mLastFrame.mvKeys.push_back(kpB);
+                    lineCount++;
+                    kpBLastFrameCnt++;
+                    
+                    // AddKeypoint(mLastFrame.mvKeys, kpB);
+                    continue;
+                }
+            }
+            lineCount++;      
+        }
+        // cout << "****************" << endl;
+        // for(std::vector<cv::KeyPoint>::const_iterator i = frameA.begin(); i != frameA.end(); ++i) {
+        //     cout << (*i).pt.x << ','  << (*i).pt.y << endl;    
+        // }
+        
+        // cout << "****************" << endl;
+        // for (std::vector<cv::KeyPoint>::const_iterator j = frameB.begin(); j != frameB.end(); j++) {
+        //     cout << (*j).pt.x << "," << (*j).pt.y << endl;
+        // }
+        // cout << "****************" << endl;
+    } else {
+        cout << "#############################" << endl;
+        cout << "########## FAILURE ##########" << endl;
+        cout << "#############################" << endl;
+        cout << strcat((char *)std::to_string(mnId).c_str(), ".out") << endl;
+    }
+
+    trackFile.close();
+
+    // if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
+    //     mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+    // else
+    //     mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+
+    mCurrentFrame = Frame(frameA,timestamp,mK,mDistCoef,mbf,mThDepth,verboseLevel);
+
+    if (verboseLevel >= 5) { 
+        cout << "Tracking: GrabTracks: frameA.size(): " << frameA.size() << " mLastFrame.mvKeysUn.size(): " << mLastFrame.mvKeysUn.size() 
+            << " mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
+        cout << "Tracking: GrabTracks: kpBFrameBCnt: " << kpBFrameBCnt << " kpBInitialFrameCnt: " << kpBInitialFrameCnt << " kpBLastFrameCnt: " << kpBLastFrameCnt << endl;
+    }
+
+    Track(frame_img_path, true, verboseLevel);
+
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Tracking: GrabTracks: Finished calling 'Track'." << endl;
+    }
+
+    cv::Mat a = mCurrentFrame.mTcw.clone();
+
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Tracking: GrabTracks: Finished cloning mCurrentFrame.mTcw." << endl;
+    }
+    return mCurrentFrame.mTcw.clone();
+}
+
+void Tracking::Track(const string frame_img_path, bool load_tracks, int verboseLevel)
+{
+    if (verboseLevel >= 5) {
+        cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << syscall(SYS_gettid) << ": Tracking: Track @@@@@@@@@@@@@@@@@@@@@@@@@@@@@ - Current Frame - " << mCurrentFrame.mnId << endl;
+    }
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
@@ -280,16 +454,36 @@ void Tracking::Track(const string frame_img_path)
     {
         if(mSensor==System::STEREO || mSensor==System::RGBD)
             StereoInitialization();
-        else
-            MonocularInitialization(frame_img_path);
+        else {
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: Track: Starting MonocularInitialization" << endl;
+            }
+            MonocularInitialization(frame_img_path, load_tracks, verboseLevel);
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: Track: Ending MonocularInitialization" << endl;
+            }
+        }
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Tracking: Track: Starting to update Frame Drawer." << endl;
+        }
 
-        mpFrameDrawer->Update(this);
+        mpFrameDrawer->Update(this, load_tracks);
 
-        if(mState!=OK)
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Tracking: Track: Finished updating Frame Drawer. mState: " << mState << endl;
+        }
+        if(mState!=OK) {
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: Track: State != OK. " << mState << endl;
+            }
             return;
+        }
     }
     else
     {
+        if (verboseLevel >= 1) {
+            cout << syscall(SYS_gettid) << ": System Initialized" << endl;
+        }
         // System is initialized. Track Frame.
         bool bOK;
 
@@ -310,7 +504,7 @@ void Tracking::Track(const string frame_img_path)
                 }
                 else
                 {
-                    bOK = TrackWithMotionModel();
+                    bOK = TrackWithMotionModel(load_tracks, verboseLevel);
                     if(!bOK)
                         bOK = TrackReferenceKeyFrame();
                 }
@@ -336,7 +530,7 @@ void Tracking::Track(const string frame_img_path)
 
                     if(!mVelocity.empty())
                     {
-                        bOK = TrackWithMotionModel();
+                        bOK = TrackWithMotionModel(load_tracks, verboseLevel);
                     }
                     else
                     {
@@ -454,8 +648,15 @@ void Tracking::Track(const string frame_img_path)
             mlpTemporalPoints.clear();
 
             // Check if we need to insert a new keyframe
-            if(NeedNewKeyFrame())
-                CreateNewKeyFrame(frame_img_path);
+            if(NeedNewKeyFrame()) {
+                if (verboseLevel >=1 ) {
+                    cout << "##### Starting to create new keyFrame #####" << endl;
+                }
+                CreateNewKeyFrame(frame_img_path, load_tracks, verboseLevel);
+                if (verboseLevel >=1 ) {
+                    cout << "##### Done creating new keyFrame #####" << endl;
+                }
+            }
 
             // We allow points with high innovation (considererd outliers by the Huber Function)
             // pass to the new keyframe, so that bundle adjustment will finally decide
@@ -560,9 +761,9 @@ void Tracking::StereoInitialization()
     }
 }
 
-void Tracking::MonocularInitialization(const string frame_img_path)
+void Tracking::MonocularInitialization(const string frame_img_path, bool load_tracks, int verboseLevel)
 {
-
+    int nmatches = -1;
     if(!mpInitializer)
     {
         // Set Reference Frame
@@ -579,7 +780,9 @@ void Tracking::MonocularInitialization(const string frame_img_path)
                 delete mpInitializer;
 
             mpInitializer =  new Initializer(mCurrentFrame,1.0,200);
-
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: !mpInitialize, mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+            }
             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
 
             return;
@@ -596,10 +799,37 @@ void Tracking::MonocularInitialization(const string frame_img_path)
             return;
         }
 
-        // Find correspondences
-        ORBmatcher matcher(0.9,true);
-        int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: mpInitialize, mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+        }
 
+        if (load_tracks) {
+            ORBmatcher matcher(0.9,true);
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Starting to load initialization tracks" << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mInitialFrame.mvKeys.size(): " << mInitialFrame.mvKeys.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mCurrentFrame.mvKeys.size(): " << mCurrentFrame.mvKeys.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mCurrentFrame.mvKeysUn.size(): " << mCurrentFrame.mvKeysUn.size() << endl;
+            }
+            nmatches = matcher.LoadInitializationTracks(mpInitializer, mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100, verboseLevel);
+            if (verboseLevel >= 5) {
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Done loading initialization tracks. mvIniMatches.size(): " << mvIniMatches.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mInitialFrame.mvKeys.size(): " << mInitialFrame.mvKeys.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mCurrentFrame.mvKeys.size(): " << mCurrentFrame.mvKeys.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mCurrentFrame.mvKeysUn.size(): " << mCurrentFrame.mvKeysUn.size() << endl;
+            }
+        } else {
+            // Find correspondences
+            ORBmatcher matcher(0.9,true);
+            nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100, verboseLevel);
+        }
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization:  Matches after searching/loading initialization tracks: " << nmatches << endl;
+        }
         // Check if there are enough correspondences
         if(nmatches<100)
         {
@@ -612,7 +842,16 @@ void Tracking::MonocularInitialization(const string frame_img_path)
         cv::Mat tcw; // Current Camera Translation
         vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
 
-        if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated))
+        cout << "##### DEBUG #####" << endl;
+        cout << "mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
+        cout << "mCurrentFrame.mvKeysUn.size(): " << mCurrentFrame.mvKeysUn.size() << endl;
+        cout << "mCurrentFrame: " << &mCurrentFrame << endl;
+        cout << "mCurrentFrame.mvKeysUn: " << &mCurrentFrame.mvKeysUn << endl;
+        cout << "mLastFrame.mvKeysUn.size(): " << mLastFrame.mvKeysUn.size() << endl;
+        cout << "mvIniMatches: " << &mvIniMatches << " mvIniMatches.size(): " << mvIniMatches.size() << endl;
+        cout << "##### END DEBUG #####" << endl;
+
+        if(mpInitializer->Initialize(mCurrentFrame, mvIniMatches, Rcw, tcw, mvIniP3D, vbTriangulated, verboseLevel))
         {
             for(size_t i=0, iend=mvIniMatches.size(); i<iend;i++)
             {
@@ -630,12 +869,12 @@ void Tracking::MonocularInitialization(const string frame_img_path)
             tcw.copyTo(Tcw.rowRange(0,3).col(3));
             mCurrentFrame.SetPose(Tcw);
 
-            CreateInitialMapMonocular(frame_img_path);
+            CreateInitialMapMonocular(frame_img_path, load_tracks, verboseLevel);
         }
     }
 }
 
-void Tracking::CreateInitialMapMonocular(const string frame_img_path)
+void Tracking::CreateInitialMapMonocular(const string frame_img_path, bool load_tracks, int verboseLevel)
 {
     // Create KeyFrames
     KeyFrame* pKFini = new KeyFrame(mInitialFrame,mpMap,mpKeyFrameDB);
@@ -643,8 +882,11 @@ void Tracking::CreateInitialMapMonocular(const string frame_img_path)
     pKFini->mnFrameImgPath = mInitialFrame_img_path;
     pKFcur->mnFrameImgPath = frame_img_path;
 
-    pKFini->ComputeBoW();
-    pKFcur->ComputeBoW();
+    if (!load_tracks) {
+    // Raj: Not sure if I can simple ignore this when loading tracks
+        pKFini->ComputeBoW();
+        pKFcur->ComputeBoW();
+    }
 
     // Insert KFs in the map
     mpMap->AddKeyFrame(pKFini);
@@ -667,8 +909,11 @@ void Tracking::CreateInitialMapMonocular(const string frame_img_path)
         pMP->AddObservation(pKFini,i);
         pMP->AddObservation(pKFcur,mvIniMatches[i]);
 
-        pMP->ComputeDistinctiveDescriptors();
-        pMP->UpdateNormalAndDepth();
+        if (!load_tracks) {
+            // Raj: Not sure if I can simple ignore this when loading tracks
+            pMP->ComputeDistinctiveDescriptors();
+        }
+        pMP->UpdateNormalAndDepth(load_tracks, verboseLevel);
 
         //Fill Current Frame structure
         mCurrentFrame.mvpMapPoints[mvIniMatches[i]] = pMP;
@@ -691,7 +936,7 @@ void Tracking::CreateInitialMapMonocular(const string frame_img_path)
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
-    if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100)
+    if(medianDepth<0 || pKFcur->TrackedMapPoints(1, verboseLevel)<100)
     {
         cout << "Wrong initialization, reseting..." << endl;
         Reset();
@@ -714,6 +959,9 @@ void Tracking::CreateInitialMapMonocular(const string frame_img_path)
         }
     }
 
+    if (verboseLevel >= 5) {
+        cout << "Tracking: CreateInitialMapMonocular: ########################################################## Inserting new keyframe ##########################################################" << endl;
+    }
     mpLocalMapper->InsertKeyFrame(pKFini);
     mpLocalMapper->InsertKeyFrame(pKFcur);
 
@@ -866,8 +1114,9 @@ void Tracking::UpdateLastFrame()
     }
 }
 
-bool Tracking::TrackWithMotionModel()
+bool Tracking::TrackWithMotionModel(bool load_tracks, int verboseLevel)
 {
+    int nmatches = -1;
     ORBmatcher matcher(0.9,true);
 
     // Update last frame pose according to its reference keyframe
@@ -884,7 +1133,15 @@ bool Tracking::TrackWithMotionModel()
         th=15;
     else
         th=7;
-    int nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR);
+
+    if (load_tracks) {
+        if (verboseLevel >= 5) {
+            cout << syscall(SYS_gettid) << ": ################ ORBmatcher: Motion Model ################  ------------ " << mCurrentFrame.mnId << " ------------ " << endl;
+        }
+        nmatches = matcher.LoadTracks(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR, verboseLevel);
+    } else {
+        nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,th,mSensor==System::MONOCULAR);
+    }
 
     // If few matches, uses a wider window search
     if(nmatches<20)
@@ -1075,7 +1332,7 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 }
 
-void Tracking::CreateNewKeyFrame(const string frame_img_path)
+void Tracking::CreateNewKeyFrame(const string frame_img_path, bool load_tracks, int verboseLevel)
 {
     if(!mpLocalMapper->SetNotStop(true))
         return;
@@ -1130,8 +1387,11 @@ void Tracking::CreateNewKeyFrame(const string frame_img_path)
                     MapPoint* pNewMP = new MapPoint(x3D,pKF,mpMap);
                     pNewMP->AddObservation(pKF,i);
                     pKF->AddMapPoint(pNewMP,i);
-                    pNewMP->ComputeDistinctiveDescriptors();
-                    pNewMP->UpdateNormalAndDepth();
+                    if (!load_tracks) {
+                        // Raj: Not sure if I can simple ignore this when loading tracks
+                        pNewMP->ComputeDistinctiveDescriptors();
+                    }
+                    pNewMP->UpdateNormalAndDepth(load_tracks, verboseLevel);
                     mpMap->AddMapPoint(pNewMP);
 
                     mCurrentFrame.mvpMapPoints[i]=pNewMP;
@@ -1148,6 +1408,10 @@ void Tracking::CreateNewKeyFrame(const string frame_img_path)
         }
     }
 
+     if (verboseLevel >= 5) {
+        cout << "Tracking: CreateNewKeyFrame: ########################################################## Inserting new keyframe ##########################################################" << endl;
+    }
+    
     mpLocalMapper->InsertKeyFrame(pKF);
 
     mpLocalMapper->SetNotStop(false);

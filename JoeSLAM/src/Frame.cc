@@ -27,6 +27,7 @@ namespace ORB_SLAM2
 {
 
 long unsigned int Frame::nNextId=0;
+long int Frame::mNextClassId=0;
 bool Frame::mbInitialComputations=true;
 float Frame::cx, Frame::cy, Frame::fx, Frame::fy, Frame::invfx, Frame::invfy;
 float Frame::mnMinX, Frame::mnMinY, Frame::mnMaxX, Frame::mnMaxY;
@@ -49,6 +50,7 @@ Frame::Frame(const Frame &frame)
      mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors),
      mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2)
 {
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!! Creating Frame - 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++)
             mGrid[i][j]=frame.mGrid[i][j];
@@ -62,6 +64,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!! Creating Frame - 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     // Frame ID
     mnId=nNextId++;
 
@@ -120,6 +123,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!! Creating Frame - 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     // Frame ID
     mnId=nNextId++;
 
@@ -175,6 +179,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!! Creating Frame - 4 !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
     // Frame ID
     mnId=nNextId++;
 
@@ -189,6 +194,11 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 
     // ORB extraction
     ExtractORB(0,imGray);
+
+    // Raj: assign a class id to each 
+    for (int i = 0; i < mvKeys.size(); i++) {
+        mvKeys[i].class_id = mNextClassId++;
+    }
 
     N = mvKeys.size();
 
@@ -227,6 +237,102 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     AssignFeaturesToGrid();
 }
 
+Frame::Frame(std::vector<cv::KeyPoint> kpts, const double &timeStamp, cv::Mat &K, cv::Mat &distCoef, const float &bf, 
+        const float &thDepth, int verboseLevel)
+    :mvKeys(kpts),mpORBvocabulary(static_cast<ORBVocabulary*>(NULL)),mpORBextractorLeft(static_cast<ORBextractor*>(NULL)),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
+     mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
+{
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Start" << endl;
+    }
+    // Frame ID
+    mnId=nNextId++;
+
+    // Scale Level Info
+    // mnScaleLevels = mpORBextractorLeft->GetLevels();
+    // mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
+    // mfLogScaleFactor = log(mfScaleFactor);
+    // mvScaleFactors = mpORBextractorLeft->GetScaleFactors();
+    // mvInvScaleFactors = mpORBextractorLeft->GetInverseScaleFactors();
+    // mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
+    // mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
+
+    // ORB extraction
+    // ExtractORB(0,imGray);
+
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Loading key points" << endl;
+    }
+    LoadKeypoints(kpts);
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Done loading key points" << endl;
+    }
+
+    N = mvKeys.size();
+
+    if(mvKeys.empty())
+        return;
+
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Start undistorting keypoints" << endl;
+    }
+
+    /*********************************************************************
+    Raj: Not sure if I should do this - replace UndistortKeyPoints with a simple loop
+    *********************************************************************/
+
+    // UndistortKeyPoints();
+    mvKeysUn.resize(mvKeys.size());
+    for(int i=0; i<mvKeys.size(); i++)
+    {
+        cv::KeyPoint kp = mvKeys[i];
+        mvKeysUn[i]=kp;
+    }
+
+
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Done undistorting keypoints. Sample ClassId: " << mvKeys[0].class_id  << mvKeysUn[0].class_id << endl;
+    }
+
+    // Set no stereo information
+    mvuRight = vector<float>(N,-1);
+    mvDepth = vector<float>(N,-1);
+
+    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
+    mvbOutlier = vector<bool>(N,false);
+
+    // This is done only for the first Frame (or after a change in the calibration)
+    if(mbInitialComputations)
+    {
+        // ComputeImageBounds(imGray);
+
+        mfGridElementWidthInv=static_cast<float>(FRAME_GRID_COLS)/static_cast<float>(mnMaxX-mnMinX);
+        mfGridElementHeightInv=static_cast<float>(FRAME_GRID_ROWS)/static_cast<float>(mnMaxY-mnMinY);
+
+        fx = K.at<float>(0,0);
+        fy = K.at<float>(1,1);
+        cx = K.at<float>(0,2);
+        cy = K.at<float>(1,2);
+        invfx = 1.0f/fx;
+        invfy = 1.0f/fy;
+
+        mbInitialComputations=false;
+    }
+
+    mb = mbf/fx;
+
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Start assigning features to grid" << endl;
+    }
+    AssignFeaturesToGrid();
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: Done assigning features to grid" << endl;
+    }
+    if (verboseLevel >= 5) {
+        cout << "Frame: Frame: End" << endl;
+    }
+}
+
 void Frame::AssignFeaturesToGrid()
 {
     int nReserve = 0.5f*N/(FRAME_GRID_COLS*FRAME_GRID_ROWS);
@@ -241,6 +347,15 @@ void Frame::AssignFeaturesToGrid()
         int nGridPosX, nGridPosY;
         if(PosInGrid(kp,nGridPosX,nGridPosY))
             mGrid[nGridPosX][nGridPosY].push_back(i);
+    }
+}
+
+void Frame::LoadKeypoints(std::vector<cv::KeyPoint> kpts)
+{
+    mvKeys.clear();
+    // mvKeys.reserve(kpts.size());
+    for(std::vector<cv::KeyPoint>::const_iterator kpt=kpts.begin(); kpt!=kpts.end(); kpt++) {
+        mvKeys.push_back(*kpt);
     }
 }
 

@@ -30,7 +30,7 @@ namespace ORB_SLAM2
 {
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer, const string &dataDir, const bool bCloseLoops):mSensor(sensor),mbReset(false),mbActivateLocalizationMode(false),
+               const bool bUseViewer, const string &dataDir, const bool bCloseLoops, const bool bLoadTracks, const int iVerboseLevel):mSensor(sensor),mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
@@ -86,7 +86,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
                              mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
 
     //Initialize the Local Mapping thread and launch
-    mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+    mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR, bLoadTracks, iVerboseLevel);
     mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
 
     //Initialize the Loop Closing thread and launch
@@ -201,7 +201,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     return mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 }
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path)
+cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path, bool load_tracks, int verboseLevel)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -243,7 +243,14 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp, const
     }
     }
 
-    return mpTracker->GrabImageMonocular(im,timestamp,frame_img_path);
+    if (load_tracks) {
+        if (verboseLevel >= 5) {
+            cout << "System: TrackMonocular: Starting to Grab Tracks" << endl;
+        }
+        return mpTracker->GrabTracks(timestamp, frame_img_path, verboseLevel, im);
+    } else {
+        return mpTracker->GrabImageMonocular(im,timestamp,frame_img_path, verboseLevel);
+    }
 }
 
 void System::ActivateLocalizationMode()

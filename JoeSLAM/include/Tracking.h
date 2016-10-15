@@ -60,7 +60,12 @@ public:
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
-    cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path = "");
+    cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path = "", int verboseLevel = 0);
+
+    void AddKeypoint(std::vector<cv::KeyPoint> keys, cv::KeyPoint keypoint);
+    cv::Mat GrabTracks(const double &timestamp, const string frame_img_path, const int verboseLevel, const cv::Mat &im);
+
+    bool hasKeypoint(std::vector<cv::KeyPoint> keys, int classId);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
@@ -123,19 +128,19 @@ public:
 protected:
 
     // Main tracking function. It is independent of the input sensor.
-    void Track(const string frame_img_path = "");
+    void Track(const string frame_img_path = "", bool load_tracks = false, int verboseLevel = 0);
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();
 
     // Map initialization for monocular
-    void MonocularInitialization(const string frame_img_path = "");
-    void CreateInitialMapMonocular(const string frame_img_path = "");
+    void MonocularInitialization(const string frame_img_path = "", bool load_tracks = false, int verboseLevel = 0);
+    void CreateInitialMapMonocular(const string frame_img_path = "", bool load_tracks = false, int verboseLevel = 0);
 
     void CheckReplacedInLastFrame();
     bool TrackReferenceKeyFrame();
     void UpdateLastFrame();
-    bool TrackWithMotionModel();
+    bool TrackWithMotionModel(bool load_tracks = false, int verboseLevel = 0);
 
     bool Relocalization();
 
@@ -147,7 +152,7 @@ protected:
     void SearchLocalPoints();
 
     bool NeedNewKeyFrame();
-    void CreateNewKeyFrame(const string frame_img_path = "");
+    void CreateNewKeyFrame(const string frame_img_path = "", bool load_tracks = false, int verboseLevel = 0);
 
     // In case of performing only localization, this flag is true when there are no matches to
     // points in the map. Still tracking will continue if there are enough matches with temporal points.

@@ -43,7 +43,7 @@ public:
     FrameDrawer(Map* pMap);
 
     // Update info from the last processed frame.
-    void Update(Tracking *pTracker);
+    void Update(Tracking *pTracker, bool load_tracks = false);
 
     // Draw last processed frame.
     cv::Mat DrawFrame();

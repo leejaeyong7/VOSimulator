@@ -46,7 +46,7 @@ bool loaded_from_video = false;
 
 int main(int argc, char **argv)
 {
-    if(argc != 4 && argc != 5)
+    if(argc != 4 && argc != 5 && argc != 6 && argc != 7)
     {
         cerr << endl << "Usage: ./mono_jmd path_to_vocabulary path_to_settings path_to_sequence_or_videofile [close_loops(boolean) - 0/1]" << endl;
         return 1;
@@ -61,11 +61,26 @@ int main(int argc, char **argv)
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     bool bCloseLoops = true;
+    bool bLoadTracks = false;
+    int iVerboseLevel = 0;
     if(argc == 5)
     {
         bCloseLoops = !(strcmp(argv[4],"0") == 0);
-    } 
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true,"",bCloseLoops);
+    }
+
+    if(argc == 6)
+    {
+        bCloseLoops = !(strcmp(argv[4],"0") == 0);
+        bLoadTracks = (strcmp(argv[5],"1") == 0);
+    }
+    if (argc == 7)
+    {
+        bCloseLoops = !(strcmp(argv[4],"0") == 0);
+        bLoadTracks = (strcmp(argv[5],"1") == 0);
+        iVerboseLevel = atoi(argv[6]);
+    }
+
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true,"",bCloseLoops, bLoadTracks, iVerboseLevel);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -102,7 +117,7 @@ int main(int argc, char **argv)
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: "
-                 << string(argv[3]) << "/" << vstrImageFilenames[ni] << endl;
+                 << "/" << vstrImageFilenames[ni] << endl;
             return 1;
         }
 
@@ -113,7 +128,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im,tframe,frame_img_path);
+        SLAM.TrackMonocular(im,tframe,frame_img_path, bLoadTracks, iVerboseLevel);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

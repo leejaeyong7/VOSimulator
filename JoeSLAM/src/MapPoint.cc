@@ -327,7 +327,7 @@ bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
     return (mObservations.count(pKF));
 }
 
-void MapPoint::UpdateNormalAndDepth()
+void MapPoint::UpdateNormalAndDepth(bool load_tracks, int verboseLevel)
 {
     map<KeyFrame*,size_t> observations;
     KeyFrame* pRefKF;

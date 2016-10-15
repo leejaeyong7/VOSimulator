@@ -59,7 +59,7 @@ public:
 public:
 
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const string &dataDir = "", const bool bCloseLoops = true);
+    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const string &dataDir = "", const bool bCloseLoops = true, const bool bLoadTracks = false, const int iVerboseLevel = 0);
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -75,7 +75,7 @@ public:
     // Proccess the given monocular frame
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
-    cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path = "");
+    cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp, const string frame_img_path = "", bool load_tracks = false, int verboseLevel = 0);
 
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();

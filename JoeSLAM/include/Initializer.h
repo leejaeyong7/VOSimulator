@@ -40,13 +40,19 @@ public:
     // Computes in parallel a fundamental matrix and a homography
     // Selects a model and tries to recover the motion and the structure from motion
     bool Initialize(const Frame &CurrentFrame, const vector<int> &vMatches12,
-                    cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated);
+                    cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, int verboseLevel = 0);
 
 
+    // Keypoints from Reference Frame (Frame 1)
+    vector<cv::KeyPoint> mvKeys1;
+
+    // Keypoints from Current Frame (Frame 2)
+    vector<cv::KeyPoint> mvKeys2;
 private:
-
-    void FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21);
-    void FindFundamental(vector<bool> &vbInliers, float &score, cv::Mat &F21);
+    void DisplayVector(std::vector<int> v);
+    void DisplayKeypointVector(std::vector<cv::KeyPoint> v, int uid);
+    void FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21, int verboseLevel = 0);
+    void FindFundamental(vector<bool> &vbInliers, float &score, cv::Mat &F21, int verboseLevel = 0);
 
     cv::Mat ComputeH21(const vector<cv::Point2f> &vP1, const vector<cv::Point2f> &vP2);
     cv::Mat ComputeF21(const vector<cv::Point2f> &vP1, const vector<cv::Point2f> &vP2);
@@ -56,10 +62,10 @@ private:
     float CheckFundamental(const cv::Mat &F21, vector<bool> &vbMatchesInliers, float sigma);
 
     bool ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv::Mat &K,
-                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated);
+                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated, int verboseLevel = 0);
 
     bool ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv::Mat &K,
-                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated);
+                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated, int verboseLevel = 0);
 
     void Triangulate(const cv::KeyPoint &kp1, const cv::KeyPoint &kp2, const cv::Mat &P1, const cv::Mat &P2, cv::Mat &x3D);
 
@@ -72,11 +78,7 @@ private:
     void DecomposeE(const cv::Mat &E, cv::Mat &R1, cv::Mat &R2, cv::Mat &t);
 
 
-    // Keypoints from Reference Frame (Frame 1)
-    vector<cv::KeyPoint> mvKeys1;
-
-    // Keypoints from Current Frame (Frame 2)
-    vector<cv::KeyPoint> mvKeys2;
+    int mnId;
 
     // Current Matches from Reference to Current
     vector<Match> mvMatches12;

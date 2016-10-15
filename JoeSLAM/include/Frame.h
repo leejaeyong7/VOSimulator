@@ -57,6 +57,8 @@ public:
     // Constructor for Monocular cameras.
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
+    Frame(std::vector<cv::KeyPoint> kpts, const double &timeStamp, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, int verboseLevel);
+
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im);
 
@@ -165,6 +167,7 @@ public:
 
     // Current and Next Frame id.
     static long unsigned int nNextId;
+    static long int mNextClassId;
     long unsigned int mnId;
 
     // Reference Keyframe.
@@ -200,6 +203,8 @@ private:
 
     // Assign keypoints to the grid for speed up feature matching (called in the constructor).
     void AssignFeaturesToGrid();
+
+    void LoadKeypoints(std::vector<cv::KeyPoint> kpts);
 
     // Rotation, translation and camera center
     cv::Mat mRcw;

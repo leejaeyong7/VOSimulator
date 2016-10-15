@@ -163,7 +163,7 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 
 }
 
-void FrameDrawer::Update(Tracking *pTracker)
+void FrameDrawer::Update(Tracking *pTracker, bool load_tracks)
 {
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
