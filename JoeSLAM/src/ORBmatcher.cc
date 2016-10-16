@@ -514,9 +514,8 @@ int ORBmatcher::LoadInitializationTracks(Initializer* mpInitializer, Frame &F1, 
     for(size_t i1=0, iend1=vnMatches12.size(); i1<iend1; i1++) {
         if(vnMatches12[i1]>=0) {
             vbPrevMatched[i1]=F2.mvKeysUn[vnMatches12[i1]].pt;
-            if (verboseLevel >= 5) {
-                cout << "ORBmatcher: LoadInitializationTracks: vbPrevMatched.size(): " << vbPrevMatched.size() << " vnMatches12[i1] = " << vnMatches12[i1] << "  F2.mvKeysUn[vnMatches12[" << i1 << "]].pt = (" << F2.mvKeysUn[vnMatches12[i1]].pt.x << "," << F2.mvKeysUn[vnMatches12[i1]].pt.y  << ")" << endl;
-                cout << "ORBmatcher: LoadInitializationTracks: 4.5 mpInitializer->mvKeys2.size(): " << mpInitializer->mvKeys2.size() << endl;
+            if ((verboseLevel >= 5) && (F2.mnId == 8)) {
+                cout << "ORBmatcher: LoadInitializationTracks: vnMatches12[i1] = " << vnMatches12[i1] << "  F2.mvKeysUn[vnMatches12[" << i1 << "]].pt = (" << F2.mvKeysUn[vnMatches12[i1]].pt.x << "," << F2.mvKeysUn[vnMatches12[i1]].pt.y  << ")" << endl;
             }
         }
     }
@@ -676,7 +675,9 @@ int ORBmatcher::SearchForInitialization(Frame &F1, Frame &F2, vector<cv::Point2f
     for(size_t i1=0, iend1=vnMatches12.size(); i1<iend1; i1++) {
         if(vnMatches12[i1]>=0) {
             vbPrevMatched[i1]=F2.mvKeysUn[vnMatches12[i1]].pt;
-
+            if ((verboseLevel >= 5) && (F2.mnId == 8)) {
+                cout << "ORBmatcher: LoadInitializationTracks: vnMatches12[i1] = " << vnMatches12[i1] << "  F2.mvKeysUn[vnMatches12[" << i1 << "]].pt = (" << F2.mvKeysUn[vnMatches12[i1]].pt.x << "," << F2.mvKeysUn[vnMatches12[i1]].pt.y  << ")" << endl;
+            }
             char output[500];
             sprintf(output, "!!!!!!!!!!!!!!!!!!!!!!!!\n%s\n%s\n%s,%s\n%s\n%s\n%s,%s\n",
                 std::to_string(F2.mnId).c_str(),

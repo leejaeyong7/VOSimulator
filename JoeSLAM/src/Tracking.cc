@@ -790,6 +790,15 @@ void Tracking::MonocularInitialization(const string frame_img_path, bool load_tr
     }
     else
     {
+        mvbPrevMatched.resize(mInitialFrame.mvKeysUn.size());
+        for(size_t i=0; i<mInitialFrame.mvKeysUn.size(); i++) {
+            mvbPrevMatched[i]=mInitialFrame.mvKeysUn[i].pt;
+        }
+        if(mpInitializer)
+            delete mpInitializer;
+
+        mpInitializer =  new Initializer(mInitialFrame,1.0,200);
+        
         // Try to initialize
         if((int)mCurrentFrame.mvKeys.size()<=100)
         {
@@ -812,6 +821,7 @@ void Tracking::MonocularInitialization(const string frame_img_path, bool load_tr
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mCurrentFrame.mvKeys.size(): " << mCurrentFrame.mvKeys.size() << endl;
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mCurrentFrame.mvKeysUn.size(): " << mCurrentFrame.mvKeysUn.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right before loading initialization tracks, mvbPrevMatched.size(): " << mvbPrevMatched.size() << endl;
             }
             nmatches = matcher.LoadInitializationTracks(mpInitializer, mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100, verboseLevel);
             if (verboseLevel >= 5) {
@@ -821,6 +831,7 @@ void Tracking::MonocularInitialization(const string frame_img_path, bool load_tr
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mInitialFrame.mvKeysUn.size(): " << mInitialFrame.mvKeysUn.size() << endl;
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mCurrentFrame.mvKeys.size(): " << mCurrentFrame.mvKeys.size() << endl;
                 cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mCurrentFrame.mvKeysUn.size(): " << mCurrentFrame.mvKeysUn.size() << endl;
+                cout << syscall(SYS_gettid) << ": Tracking: MonocularInitialization: Right after loading initialization tracks, mvbPrevMatched.size(): " << mvbPrevMatched.size() << endl;
             }
         } else {
             // Find correspondences

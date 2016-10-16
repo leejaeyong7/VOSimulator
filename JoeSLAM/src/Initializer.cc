@@ -43,8 +43,15 @@ Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iteration
 }
 
 void Initializer::DisplayVector(std::vector<int> v) {
-    for (std::vector<int>::const_iterator i = v.begin(); i != v.end(); i++) {
-        cout << *i << endl;
+    for (int j = 0; j < v.size(); j++) {
+        cout << j << " - " << v[j] << endl;
+    }
+}
+
+void Initializer::DisplayVectorBool(std::vector<bool> v) {
+    cout << "Initializer: DisplayVectorBool - v.size(): " << v.size() << endl;
+    for (int j = 0; j < v.size(); j++) {
+        cout << "Initializer: DisplayVectorBool - " << j << " - " << v[j] << endl;
     }
 }
 
@@ -68,7 +75,7 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
 {
     if (verboseLevel >= 5) {
         cout << syscall(SYS_gettid) << ": Initializer: Initialize: Starting Initialize - " << CurrentFrame.mnId << endl;
-        cout << "Initializer::Initialize: Start of function - mvKeys2.size(): " << mvKeys2.size() << endl;
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Start of function - mvKeys2.size(): " << mvKeys2.size() << endl;
     }
     // Fill structures with current keypoints and matches with reference frame
     // Reference Frame: 1, Current Frame: 2
@@ -95,6 +102,9 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
             mvbMatched1[i]=false;
     }
 
+    // if (mnId == 8) {
+    //     DisplayVector(vMatches12);
+    // }
     const int N = mvMatches12.size();
 
     // Indices for minimum set selection
@@ -108,6 +118,9 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     for(int i=0; i<N; i++)
     {
         vAllIndices.push_back(i);
+    }
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Ending indices for minimum set selection." << endl;
     }
 
     // Generate sets of 8 points for each RANSAC iteration
@@ -132,22 +145,32 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
         }
     }
 
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: Initialize: Going to start computing fundamental and homography matrices." << endl;
+    }
     // Launch threads to compute in parallel a fundamental matrix and a homography
     vector<bool> vbMatchesInliersH, vbMatchesInliersF;
     float SH, SF;
     cv::Mat H, F;
 
-    thread threadH(&Initializer::FindHomography,this,ref(vbMatchesInliersH), ref(SH), ref(H), ref(verboseLevel));
-    thread threadF(&Initializer::FindFundamental,this,ref(vbMatchesInliersF), ref(SF), ref(F), ref(verboseLevel));
+    cout << syscall(SYS_gettid) << ": Initializer: Initialize: ###########################" << endl;
+    cout << syscall(SYS_gettid) << ": Initializer: Initialize: mvMatches12.size(): " << mvMatches12.size() << endl;
+    cout << syscall(SYS_gettid) << ": Initializer: Initialize: !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
 
-    // Wait until both threads have finished
-    threadH.join();
-    threadF.join();
+    FindHomography(vbMatchesInliersH, SH, H, verboseLevel);
+    FindFundamental(vbMatchesInliersF, SF, F, verboseLevel);
+    // thread threadH(&Initializer::FindHomography,this,ref(vbMatchesInliersH), ref(SH), ref(H), ref(verboseLevel));
+    // thread threadF(&Initializer::FindFundamental,this,ref(vbMatchesInliersF), ref(SF), ref(F), ref(verboseLevel));
+
+    // // Wait until both threads have finished
+    // threadH.join();
+    // threadF.join();
 
     // Compute ratio of scores
     float RH = SH/(SH+SF);
 
     // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
+        // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
     if(RH>0.40) {
         bool h_reconstruction = ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50, verboseLevel);
         if (verboseLevel >= 5) {
@@ -163,6 +186,33 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
         return f_reconstruction;
     }
     return false;
+    // if(RH>0.40) {
+    //     if (ReconstructH(vbMatchesInliersH,H,mK,R21,t21,vP3D,vbTriangulated,1.0,50, verboseLevel)) {
+    //         if (verboseLevel >= 5) {
+    //             cout << syscall(SYS_gettid) << ": Initializer: Initialize: Ending Initialize - Homography reconstruction successful." << endl;
+    //         }
+    //         return true;
+    //     } else {
+    //         if (verboseLevel >= 5) {
+    //             cout << syscall(SYS_gettid) << ": Initializer: Initialize: Failed Homography Reconstruction" << endl;
+    //         }
+    //         return false;
+    //     }
+    // } else { //if(pF_HF>0.6)
+
+    //     if (ReconstructF(vbMatchesInliersF,F,mK,R21,t21,vP3D,vbTriangulated,1.0,50, verboseLevel)) {
+    //         if (verboseLevel >= 5) {
+    //             cout << syscall(SYS_gettid) << ": Initializer: Initialize: Ending Initialize - Fundamental matrix reconstruction successful." << endl;
+    //         }
+    //         return true;
+    //     } else {
+    //         if (verboseLevel >= 5) {
+    //             cout << syscall(SYS_gettid) << ": Initializer: Initialize: Failed Fundamental Matrix Reconstruction" << endl;
+    //         }
+    //         return false;
+    //     }
+    // }
+    // return false;
 }
 
 
@@ -214,6 +264,10 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
             score = currentScore;
         }
     }
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: FindHomography: H21: " << H21 << endl;
+        cout << syscall(SYS_gettid) << ": Initializer: FindHomography: Ending FindHomography" << endl;
+    }
 }
 
 
@@ -250,6 +304,9 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
 
             vPn1i[j] = vPn1[mvMatches12[idx].first];
             vPn2i[j] = vPn2[mvMatches12[idx].second];
+            // if (verboseLevel >= 5) {
+            //     cout << syscall(SYS_gettid) << ": Initializer: FindFundamental: idx=" << idx << "  mvMatches12[idx]=" << mvMatches12[idx] << " vPn1[mvMatches12[idx].first]=" << vPn1[mvMatches12[idx].first] << " vPn1[mvMatches12[idx].second]=" << vPn1[mvMatches12[idx].second] << endl;
+            // }
         }
 
         cv::Mat Fn = ComputeF21(vPn1i,vPn2i);
@@ -258,12 +315,20 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
 
         currentScore = CheckFundamental(F21i, vbCurrentInliers, mSigma);
 
+        // if (verboseLevel >= 5) {
+        //     cout << syscall(SYS_gettid) << ": Initializer: FindFundamental: Fn=" << Fn << " currentScore: " << currentScore << endl;
+        // }
+
         if(currentScore>score)
         {
             F21 = F21i.clone();
             vbMatchesInliers = vbCurrentInliers;
             score = currentScore;
         }
+    }
+    if (verboseLevel >= 5) {
+        cout << syscall(SYS_gettid) << ": Initializer: FindFundamental: F21: " << F21 << endl;
+        cout << syscall(SYS_gettid) << ": Initializer: FindFundamental: Ending FindFundamental" << endl;
     }
 }
 
@@ -466,7 +531,7 @@ float Initializer::CheckFundamental(const cv::Mat &F21, vector<bool> &vbMatchesI
         const float v1 = kp1.pt.y;
         const float u2 = kp2.pt.x;
         const float v2 = kp2.pt.y;
-
+        // cout << "Initializer: CheckFundamental: " << i << ": kp1: " << kp1.pt.x << "," << kp1.pt.y << " kp2: " << kp2.pt.x << "," << kp2.pt.y << endl;
         // Reprojection error in second image
         // l2=F21x1=(a2,b2,c2)
 

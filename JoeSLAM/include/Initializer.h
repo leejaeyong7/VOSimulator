@@ -50,6 +50,7 @@ public:
     vector<cv::KeyPoint> mvKeys2;
 private:
     void DisplayVector(std::vector<int> v);
+    void DisplayVectorBool(std::vector<bool> v);
     void DisplayKeypointVector(std::vector<cv::KeyPoint> v, int uid);
     void FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21, int verboseLevel = 0);
     void FindFundamental(vector<bool> &vbInliers, float &score, cv::Mat &F21, int verboseLevel = 0);
