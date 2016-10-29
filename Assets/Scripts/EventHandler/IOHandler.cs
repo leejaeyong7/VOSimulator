@@ -6,95 +6,58 @@ using com.ootii.Messages;
 using System.Linq;
 
 enum IO_States : int {
-	File = 1,
-	Trajectory,
-	TerrainTexture,
-	TerrainRelief,
-	Object,
-	Environment,
-	Capturing,
-	SLAM,
-	Loading,
-	ERROR
+	FILE = 1,
+    ENVIRONMENT_TERRAIN_TEXTURE,
+    ENVIRONMENT_TERRAIN_RELIEF,
+    ENVIRONMENT_OBJECT,
+    TRAJECTORY_CREATE,
+    TRAJECTORY_VIEW,
+    EXECUTE,
+    CAPTURING,
+    LOADING,
+    ERROR
 };
 
 public class IOHandler : MonoBehaviour {
-	int savedState;
-	int currentState;
+	IO_States savedState;
+    IO_States currentState;
 	// Use this for initialization
 	void Start () {
-		MessageDispatcher.AddListener ("SET_MODE",setMode);		
 		MessageDispatcher.AddListener ("SET_STATE",setState);		
 		MessageDispatcher.AddListener ("SAVE_STATE",saveState);		
 		MessageDispatcher.AddListener ("LOAD_STATE",loadState);		
 	}
 
-	public void setMode(IMessage rMessage){
-		string mode = (string)rMessage.Data;
-		switch (mode) {
-		case "Simulation":
-			{
-				Terrain.activeTerrain.drawHeightmap = true;
-				GameObject pc = GameObject.Find ("Pointclouds");
-				GameObject pcm = GameObject.Find ("PointcloudMesh");
-				if (pc) {
-					pc.SetActive (false);
-				}
-				if (pcm) {
-					pcm.SetActive (false);
-				}
-			}
-			break;
-		case "SLAM":
-			{
-				Terrain.activeTerrain.drawHeightmap = false;
-				GameObject pc = GameObject.Find ("Pointclouds");
-				GameObject pcm = GameObject.Find ("PointcloudMesh");
-				if (pc) {
-					pc.SetActive (true);
-				}
-				if (pcm) {
-					pcm.SetActive (true);
-				}
-			}
-			break;
-		default:
-			break;
-		}
-	}
-
-
-
 	public void setState(IMessage rMessage){
 		string state = (string)rMessage.Data;
 		switch (state) {
 		case "File":
-			currentState = (int)IO_States.File;
-			break;
-		case "Trajectory":
-			currentState = (int)IO_States.Trajectory;
+			currentState = IO_States.FILE;
 			break;
 		case "TerrainTexture":
-			currentState = (int)IO_States.TerrainTexture;
+			currentState = IO_States.ENVIRONMENT_TERRAIN_TEXTURE;
 			break;
 		case "TerrainRelief":
-			currentState = (int)IO_States.TerrainRelief;
+			currentState = IO_States.ENVIRONMENT_TERRAIN_RELIEF;
 			break;
 		case "Object":
-			currentState = (int)IO_States.Object;
+			currentState = IO_States.ENVIRONMENT_OBJECT;
 			break;
-		case "Environment":
-			currentState = (int)IO_States.Environment;
-			break;
+		case "TrajectoryCreate":
+			currentState = IO_States.TRAJECTORY_CREATE;
+            break;
+		case "TrajectoryView":
+			currentState = IO_States.TRAJECTORY_VIEW;
+            break;
 		case "Capture":
-			currentState = (int)IO_States.Capturing;
+			currentState = IO_States.CAPTURING;
 			break;
 		case "Loading":
-			currentState = (int)IO_States.Loading;
+			currentState = IO_States.LOADING;
 			break;
 		case "ERROR":
 		default:
-			currentState = (int)IO_States.ERROR;
+			currentState = IO_States.ERROR;
 			break;
 		}
 	}
@@ -108,11 +71,11 @@ public class IOHandler : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		switch (currentState) {
-		case (int)IO_States.Trajectory:
+		case IO_States.TRAJECTORY_CREATE:
 			trajectoryIOEvent ();
 			break;
-		case (int)IO_States.TerrainRelief:
-		case (int)IO_States.TerrainTexture:
+		case IO_States.ENVIRONMENT_TERRAIN_RELIEF:
+		case IO_States.ENVIRONMENT_TERRAIN_TEXTURE:
 			terrainIOEvent ();
 			break;
 		default:
@@ -135,7 +98,7 @@ public class IOHandler : MonoBehaviour {
 
 			MessageDispatcher.SendMessageData("SET_TERRAIN_BRUSH_POSITION",hit.point);
 			if (Input.GetMouseButton (0) && !isGUIClicked()) {
-				if (currentState == (int)IO_States.TerrainRelief) {
+				if (currentState == IO_States.ENVIRONMENT_TERRAIN_RELIEF) {
 					MessageDispatcher.SendMessage ("APPLY_TERRAIN_RELIEF");
 				} else {
 					MessageDispatcher.SendMessage ("APPLY_TERRAIN_TEXTURE");
