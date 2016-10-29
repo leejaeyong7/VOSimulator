@@ -142,7 +142,7 @@ public class SceneModeCameraMovement : MonoBehaviour {
 		return !(isObjectDragged || 
 			PanelDragHandler.isPanelDragged || 
 			fb.showFB ||
-			tm.isClicked || 
+//			tm.isClicked || 
 			gizmos.isDragged ||
 			ev.isGUIClicked() );
 	}

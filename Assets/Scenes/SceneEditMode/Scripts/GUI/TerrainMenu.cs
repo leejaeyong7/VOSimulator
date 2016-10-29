@@ -10,6 +10,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
 //----------------------------------------------------------------------------//
@@ -26,13 +27,10 @@ public class TerrainMenu : MenuPanel{
     //--------------------------------------------------------------------//
     void Start () {
 		terrainDropdown.onValueChanged.AddListener(delegate {
-			chooseTextureOptionType(terrainDropdown);
+			chooseTerrainOptionType(terrainDropdown);
 		});
         terrainDropdown.onValueChanged.Invoke(0);
     }
-	void Update(){
-		isClicked = ReliefOptions.isDragging || TextureOptions.isDragging;
-	}
 	new public void Show(){
 		base.Show ();
         terrainDropdown.onValueChanged.Invoke (0);
@@ -50,7 +48,7 @@ public class TerrainMenu : MenuPanel{
     //                    PRIVATE FUNCTION DEFINITIONS                    //
     //--------------------------------------------------------------------//
 	// edit menu dropdown select event handler
-	private void chooseTextureOptionType(Dropdown target)
+	private void chooseTerrainOptionType(Dropdown target)
 	{
 		switch (target.value) {
 		case 0:
