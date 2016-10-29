@@ -3,27 +3,10 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class JWindowHead : JGUI, IBeginDragHandler, IEndDragHandler, IDragHandler {
+public class JWindowHead : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler {
 	// declare child UI componenets 
-	Text title;
-	Button collapse;
-
-	void Start(){
-		// initialize UI components
-//		title = new Text ();
-		title.transform.SetParent (transform);
-		title.fontSize = 10;
-		title.alignment = TextAnchor.MiddleCenter;
-		title.color = Color.white;
-
-//		collapse = new Button ();
-		collapse.transform.SetParent (transform);
-//		collapse.image = new Image ();
-		collapse.image.sprite = Resources.Load<Sprite> ("DropdownArrow");
-		RectTransform rect = (RectTransform)collapse.transform;
-		rect.localPosition = new Vector3 (-5,0,0);
-		rect.sizeDelta = new Vector2 (10,10);
-	}
+	public Text title;
+	public Button collapse;
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//

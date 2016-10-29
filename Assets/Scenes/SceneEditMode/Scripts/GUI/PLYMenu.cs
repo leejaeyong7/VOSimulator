@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.IO;
+using CielaSpike;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
 //----------------------------------------------------------------------------//
@@ -26,14 +27,10 @@ public class PLYMenu : MenuPanel{
 	// Use this for initialization
 	void Start () {
 		ImportPLY.onClick.AddListener (delegate {
-			fb.showBrowser("ply",importPLY);
+			fb.showBrowser("ply",importPLYThread);
 		});
 	}
 	
-	// Update is called once per frame
-	void Update () {
-
-	}
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//
@@ -43,37 +40,101 @@ public class PLYMenu : MenuPanel{
 	//--------------------------------------------------------------------//
 	//                    PRIVATE FUNCTION DEFINITIONS                    //
 	//--------------------------------------------------------------------//
-	void importPLY( System.IO.FileInfo filename){
+
+	void importPLYThread(System.IO.FileInfo filename){
+		StartCoroutine (importPLY(filename));
+	}
+
+
+	IEnumerator importPLY( System.IO.FileInfo filename){
 		model = new PLYModel ();
 		Terrain t = Terrain.activeTerrain;
 		float t_width = t.terrainData.size.x;
 		float t_height = t.terrainData.size.z;
-		GameObject plyObjectContainer = new GameObject ("pointclouds");
-		plyObjectContainer.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
-		if (model.loadFile (filename)) {
-			if (model.createMesh ()) {
-				for (int m = 0; m < model.meshes.Count; m++) {
-					GameObject plyObject = new GameObject ("pointcloud_"+m.ToString());
-					plyObject.transform.parent = plyObjectContainer.transform;
-					MeshRenderer mr = plyObject.AddComponent<MeshRenderer> ();
-					MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
-					mf.mesh = model.meshes [m];
-					mr.material = new Material(Shader.Find("Custom/PointShader"));
-					plyObject.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
-					plyObject.transform.Rotate (new Vector3 (270, 0, 0));
-//					GameObject sub_ply = new GameObject ();
-//					Instantiate (sub_ply);
-//					MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
-//					mf.mesh = model.meshes [m];
-//					sub_ply.transform.SetParent (plyObject.transform);
+
+		Task task;
+		this.StartCoroutineAsync (model.loadFile(filename),out task);
+		if (task.State == TaskState.Error) {
+			yield return Ninja.JumpToUnity;
+			print (task.Exception);
+			yield return Ninja.JumpBack;
+			yield break;
+		}
+        yield return StartCoroutine(task.Wait());
+		if (task.State == TaskState.Done) {
+			if (model.isPointcloud) {
+				this.StartCoroutineAsync (model.createPointCloud (),out task);
+				if (task.State == TaskState.Error) {
+					yield return Ninja.JumpToUnity;
+					print (task.Exception);
+					yield return Ninja.JumpBack;
+					yield break;
+				}
+				yield return StartCoroutine(task.Wait());
+				if (task.State == TaskState.Done) {
+					// append object, set terrain to null;
+					yield return Ninja.JumpToUnity;
+					GameObject plyObjectContainer;
+					if (plyObjectContainer = GameObject.Find ("pointclouds")) {
+						foreach (Transform g in plyObjectContainer.transform) {
+							GameObject.Destroy (g.gameObject);
+						}
+					} else {
+						plyObjectContainer = new GameObject ("pointclouds");
+					}
+//					plyObjectContainer.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
+					for (int m = 0; m < model.meshes.Count; m++) {
+						GameObject plyObject = new GameObject ("pointcloud_" + m.ToString ());
+						plyObject.transform.parent = plyObjectContainer.transform;
+						MeshRenderer mr = plyObject.AddComponent<MeshRenderer> ();
+						MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
+						mf.mesh = model.meshes [m];
+						mr.material = new Material (Shader.Find ("Custom/PointShader"));
+//						plyObject.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
+//						plyObject.transform.Rotate (new Vector3 (270, 0, 0));
+					}
+					t.drawHeightmap = false;
+					yield return Ninja.JumpBack;
+					yield break;
 				}
 			} else {
-				print ("invalid file");
+				this.StartCoroutineAsync (model.createObject(),out task);
+				if (task.State == TaskState.Error) {
+					yield return Ninja.JumpToUnity;
+					print (task.Exception);
+					yield return Ninja.JumpBack;
+					yield break;
+				}
+				yield return StartCoroutine(task.Wait());
+				if (task.State == TaskState.Done) {
+					yield return Ninja.JumpToUnity;
+					GameObject plyObjectContainer;
+					if (plyObjectContainer = GameObject.Find ("pointcloudMesh")) {
+						foreach (Transform g in plyObjectContainer.transform) {
+							GameObject.Destroy (g.gameObject);
+						}
+					} else {
+						plyObjectContainer = new GameObject ("pointcloudMesh");
+					}
+//					plyObjectContainer.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
+					for (int m = 0; m < model.meshes.Count; m++) {
+						GameObject plyObject = new GameObject ("pointcloud_" + m.ToString ());
+						plyObject.transform.parent = plyObjectContainer.transform;
+						MeshRenderer mr = plyObject.AddComponent<MeshRenderer> ();
+						MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
+						MeshCollider mc = plyObject.AddComponent<MeshCollider> ();
+						mr.material = new Material (Shader.Find ("Custom/PointShader"));
+						mc.sharedMesh = model.meshes [m];
+						mf.mesh = model.meshes [m];
+//						plyObject.transform.Translate (new Vector3 (t_width / 2, 0, t_height / 2));
+//						plyObject.transform.Rotate (new Vector3 (270, 0, 0));
+					}
+					t.drawHeightmap = false;
+					yield return Ninja.JumpBack;
+					yield break;
+				}
 			}
-		} else {
-			print("error loading file");
 		}
-		t.drawHeightmap = false;
 	}
 	//--------------------------------------------------------------------//
 	//                  END PRIVATE FUNCTION DEFINITIONS                  //

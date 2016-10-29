@@ -12,6 +12,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
 //----------------------------------------------------------------------------//
@@ -41,7 +42,6 @@ public class CameraPanel : MenuPanel{
 	public GameObject focusedObject = null;
 
 	// holds all list of camera objects
-	List<GameObject> cameras;
 
 	// holds global camera setup values
 	public float var_x_2d = 0;
@@ -67,29 +67,10 @@ public class CameraPanel : MenuPanel{
 			chooseCameraMenuType(cameraMenuDropdown);
 		});
 		cameraMenuDropdown.onValueChanged.Invoke(0);
-		cameras = new List<GameObject> ();	
 	}
 
 	// Update is called once per frame
 	void Update () {
-		// on pressing space, place a camera with mesh and gameobject in scene
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			GameObject camera = Instantiate (cameraObject);
-			camera.GetComponent<Camera> ().enabled = false;
-			camera.name = "Trajectory_View_" + cameras.Count.ToString ();
-			camera.transform.position = Camera.main.transform.position;
-			camera.transform.rotation = Camera.main.transform.rotation;
-			camera.transform.localScale = new Vector3 (10,10,10);
-			BoxCollider boxCol = camera.AddComponent<BoxCollider> ();
-			boxCol.size = new Vector3 (0.3f,0.3f,0.3f);
-
-			CameraObject camobj = camera.AddComponent<CameraObject> ();
-			camobj.cameraPanel = this;
-
-			camera.transform.SetParent (trajectory.transform);
-			cameras.Add (camera);
-			trajectoryMenu.updatePath ();
-		}
 		if (Input.GetMouseButtonDown (0)) {
 			if (!ev.isGUIClicked ()) {
 				ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -117,6 +98,11 @@ public class CameraPanel : MenuPanel{
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//
+	new public void Show(){
+		base.Show ();
+		MessageDispatcher.SendMessageData ("SET_STATE", "Trajectory");
+	}
+
 	public void setupLocalMenu(){
 		if (focusedObject == null) {
 			localMenu.Hide ();
@@ -124,6 +110,7 @@ public class CameraPanel : MenuPanel{
 			localMenu.Show ();
 		}
 	}
+
 	public void setupPreviewMenu(){
 		if (focusedObject == null) {
 			if (previewMenu.attachedObject) {

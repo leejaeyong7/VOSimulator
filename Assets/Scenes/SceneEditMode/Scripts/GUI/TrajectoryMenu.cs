@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using com.ootii.Messages;
 using System.Linq;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -19,8 +20,36 @@ using System.Linq;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class TrajectoryMenu : MenuPanel {
-	public CameraPanel cameraPanel;
-	public GameObject Trajectories;
+	public CustomFileBrowser fb;
+	public Toggle DisplayTrajectory;
+	public Dropdown TrajectoryType;
+	public Button import;
+	public Button align;
+
+	public Slider Scale;
+	void Start(){
+		import.onClick.AddListener (delegate {
+			fb.showBrowser("pts",dispatchFileInfo);
+		});
+
+		align.onClick.AddListener (delegate {
+			fb.showBrowser("out",dispatchAlign);
+		});
+
+
+
+		Scale.onValueChanged.AddListener (delegate(float arg) {
+			MessageDispatcher.SendMessageData("SET_TRAJECTORY_SCALE",arg);
+		});
+	}
+
+	void dispatchFileInfo(System.IO.FileInfo fp){
+		MessageDispatcher.SendMessageData("IMPORT_TRAJECTORY",fp);
+	}
+
+	void dispatchAlign(System.IO.FileInfo fp){
+		MessageDispatcher.SendMessageData ("ALIGN_TRAJECTORY", fp);
+	}
 	//--------------------------------------------------------------------//
 	//                    PUBLIC FUNCTION DEFINITIONS                     //
 	//--------------------------------------------------------------------//
@@ -33,41 +62,6 @@ public class TrajectoryMenu : MenuPanel {
 	//--------------------------------------------------------------------//
 	//                  END PRIVATE FUNCTION DEFINITIONS                  //
 	//--------------------------------------------------------------------//
-
-	//Use GameObject in 3d space as your points or define array with desired points
-
-	//Store points on the Catmull curve so we can visualize them
-	public List<Vector3> path;
-	public List<Transform> points;
-	int cameraobjectlayer = 9;
-	GameObject lines;
-	LineRenderer lr;
-	void Start(){
-		points = new List<Transform> ();
-		path = new List<Vector3> ();
-		lines = new GameObject ();
-		lines.name = "Path";
-		lines.layer = cameraobjectlayer;
-		lr = lines.AddComponent<LineRenderer> ();
-	}
-
-	public void updatePath(){
-		// update all input points
-		getPoints();
-		path = Interpolate.NewCatmullRom (
-			points.ToArray(), 
-			points.Count*60,
-			false).ToList();
-		lr.SetVertexCount (path.Count);
-		lr.SetPositions (path.ToArray ());
-	}
-
-	void getPoints() {
-		points.Clear ();
-		foreach (Transform child in Trajectories.transform) {
-			points.Add (child);
-		}
-	}
 }
 //----------------------------------------------------------------------------//
 //                           END CLASS DEFINITIONS                            //

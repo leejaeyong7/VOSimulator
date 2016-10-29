@@ -1,13 +1,16 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using com.ootii.Messages;
 
-public class JWindow : JGUI {
-	JWindowHead header = null;
+public class JWindow : MonoBehaviour{
+	public JWindowHead header;
 	// Use this for initialization
 	void Start () {
-		GameObject headerobj= new GameObject();	
-		headerobj.transform.SetParent (transform);
-		header = headerobj.AddComponent<JWindowHead> ();
+
+	}
+
+	public void setTitle(string title){
+		
 	}
 }

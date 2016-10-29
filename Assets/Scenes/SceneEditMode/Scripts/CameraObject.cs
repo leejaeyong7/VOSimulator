@@ -16,7 +16,6 @@ using System.Collections;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class CameraObject : MonoBehaviour {
-	public CameraPanel cameraPanel;
 	float fov;
 	float aspect;
 	float focalLength;
