@@ -143,7 +143,9 @@ public class TerrainHandler : MonoBehaviour {
 	{
 		terrainShown = show;
 		Terrain.activeTerrain.drawHeightmap = show;
-	}
+        TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
+        tc.enabled = show;
+    }
 
 	//====================================================================//
 	//                   END PUBLIC METHOD DEFINITIONS                    //

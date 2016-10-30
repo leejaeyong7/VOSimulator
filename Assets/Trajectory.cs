@@ -15,7 +15,8 @@ using System.Collections.Generic;
 using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
-//----------------------------------------------------------------------------//	//--------------------------//
+//----------------------------------------------------------------------------//
+//--------------------------//
 //     HELPER CLASSES
 //--------------------------//
 // class representing featurePoint
@@ -102,14 +103,15 @@ public class Trajectory {
 
 	// Used for setting maximum number of features
 	public int maxFeatures = 0;
+
+    public int executeId;
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
 	//====================================================================//
 	//                    PRIVATE VARIABLE DEFINITIONS                    //
 	//====================================================================//
-	List<featurePoint> trackedFeatures = null;
-	List<viewpoint> viewpoints = null;
+	List<featurePoint> trackedFeatures = new List<featurePoint>();
 	//====================================================================//
 	//                  END PRIVATE VARIABLE DEFINITIONS                  //
 	//====================================================================//
@@ -136,8 +138,13 @@ public class Trajectory {
 			positions.Add(origpositions[i] * scale);
 		}
 	}
-	public void execute(int executeId)
+	public bool execute()
 	{
+        if(executeId > positions.Count - 1)
+        {
+            executeId = -1;
+            return false;
+        }
 		System.Random rnd = new System.Random();
 		bool[] featureIndices = new bool[featurePoints.Count];
 		Vector3[] featureScreenPos = new Vector3[featurePoints.Count];
@@ -151,8 +158,8 @@ public class Trajectory {
 		Camera.main.transform.rotation = rot;
 
 		// prepare writing
-		v.position = pos;
-		v.rotation = rot;
+		v.position = new Vector3(pos.x,pos.y,pos.z);
+        v.rotation = new Quaternion(rot.x, rot.y, rot.z, rot.w);
 
 		int totalRemaining = 0;
 
@@ -195,6 +202,10 @@ public class Trajectory {
 		// uniformly select toPick points from remaining indices
 		int toPick = maxFeatures - trackedFeatures.Count;
 		int[] uniformRandomIndices = new int[toPick];
+        for(int i = 0; i < toPick; i++)
+        {
+            uniformRandomIndices[i] = -1;
+        }
 		int picked = 0;
 		for (int i = 0; i < featurePoints.Count; i++)
 		{
@@ -219,13 +230,16 @@ public class Trajectory {
 		// fill in feature points
 		for (int i = 0; i < toPick; i++)
 		{
-			featurePoint f = new featurePoint();
-			f.trueId = uniformRandomIndices[i];
-			f.capturedId = uniformRandomIndices[i];
-			f.trueScreenPos = featureScreenPos[f.trueId];
-			f.capturedScreenPos = norm2D(f.trueScreenPos);
-			f.truePos = featurePoints[f.trueId];
-			trackedFeatures.Add(f);
+            if(uniformRandomIndices[i] >= 0)
+            {   
+                featurePoint f = new featurePoint();
+                f.trueId = uniformRandomIndices[i];
+                f.capturedId = uniformRandomIndices[i];
+                f.trueScreenPos = featureScreenPos[f.trueId];
+                f.capturedScreenPos = norm2D(f.trueScreenPos);
+                f.truePos = featurePoints[f.trueId];
+                trackedFeatures.Add(f);
+            }
 		}
 
 		// perform random flip
@@ -247,8 +261,9 @@ public class Trajectory {
 
 		// print to file
 		v.setFeatures(trackedFeatures);
+        System.IO.Directory.CreateDirectory("./Executes/" + name.ToString() + '/');
 
-		System.IO.File.WriteAllText(
+        System.IO.File.WriteAllText(
 			"./Executes/" + name.ToString()+'/' + executeId.ToString() + ".txt",
 			v.ToString()
 		);
@@ -256,6 +271,8 @@ public class Trajectory {
 			"./Executes/" + name.ToString()+'/' + executeId.ToString() + ".png"
 		);
 
+        executeId++;
+        return true;
 	}
 	//====================================================================//
 	//                   END PUBLIC METHOD DEFINITIONS                    //

@@ -35,6 +35,7 @@ public class TrajectoryHandler: MonoBehaviour{
 
 	public Models models;
 
+    public int currentTrajectoryId;
 
 
     //====================================================================//
@@ -43,14 +44,7 @@ public class TrajectoryHandler: MonoBehaviour{
     //====================================================================//
     //                    PRIVATE VARIABLE DEFINITIONS                    //
     //====================================================================//
-	// List of Control Points
-	//List<Vector3> PathPoints;
-	//List<Quaternion> PathRotations;
-	//List<Vector3> featurePoints;
-	//List<viewpoint> viewpoints;
-	//List<featurePoint> trackedFeatures;
-	PTSLoader ptsLoader;
-	int currentTrajectoryId;
+    PTSLoader ptsLoader;
 	// Used for Noise modelling
 	float mu_u = 0;
 	float mu_v = 0;
@@ -67,7 +61,8 @@ public class TrajectoryHandler: MonoBehaviour{
 	float fliprate = 0;
 
 	// Used for setting maximum number of features
-	int maxFeatures = 0;
+	int maxFeatures = 500;
+    List<Vector3> features;
     //====================================================================//
     //                  END PRIVATE VARIABLE DEFINITIONS                  //
     //====================================================================//
@@ -85,6 +80,7 @@ public class TrajectoryHandler: MonoBehaviour{
 	{
 
 		ptsLoader = new PTSLoader();
+        features = new List<Vector3>();
 		// set main culling mask to everything
 		Camera.main.cullingMask = -1;
 		// initialize vectors
@@ -136,20 +132,59 @@ public class TrajectoryHandler: MonoBehaviour{
 		MessageDispatcher.AddListener("SET_ASPECT",
 			delegate (IMessage rMessage) { aspect = (float)rMessage.Data; });
 	}
-	//====================================================================//
-	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
-	//====================================================================//
-	//====================================================================//
-	//                     PUBLIC METHOD DEFINITIONS                      //
-	//====================================================================//
-	//====================================================================//
-	//                   END PUBLIC METHOD DEFINITIONS                    //
-	//====================================================================//
-	//====================================================================//
-	//                     PRIVATE METHOD DEFINITIONS                     //
-	//====================================================================//
+    //====================================================================//
+    //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
+    //====================================================================//
+    //====================================================================//
+    //                     PUBLIC METHOD DEFINITIONS                      //
+    //====================================================================//
 
-	void importTrajectory(IMessage rMessage)
+    public void updateTrajectory()
+    {
+        Trajectory t = models.Trajectories[currentTrajectoryId];
+
+        t.mu_u = mu_u;
+        t.mu_v = mu_v;
+        t.sig_u = sig_u;
+        t.sig_v = sig_v;
+        t.scale = models.scale;
+        t.droprate = droprate;
+        t.fliprate = fliprate;
+        t.FOV = FOV;
+        t.focalLength = focalLength;
+        t.aspect = aspect;
+        t.maxFeatures = maxFeatures;
+        t.update();
+        models.trajectoryLine.SetVertexCount(t.positions.Count);
+        models.trajectoryLine.SetPositions(t.positions.ToArray());
+        loadFeatures();
+        t.featurePoints = features;
+        Debug.Log(features.Count);
+        t.executeId = 0;
+        // currently removed because too slow
+        //foreach (Transform trans in models.TrajectoryGameObject.transform)
+        //{
+        //	Destroy(trans.gameObject);
+        //}
+        //for (int i = 0; i < t.positions.Count; i++)
+        //{
+        //	//GameObject cam = (GameObject)Instantiate(
+        //	//	cameraObject,
+        //	//	t.positions[i],
+        //	//	t.rotations[i]);
+        //	//cam.transform.parent = models.TrajectoryGameObject.transform;
+        //}
+    }
+
+
+    //====================================================================//
+    //                   END PUBLIC METHOD DEFINITIONS                    //
+    //====================================================================//
+    //====================================================================//
+    //                     PRIVATE METHOD DEFINITIONS                     //
+    //====================================================================//
+
+    void importTrajectory(IMessage rMessage)
 	{
 		fb.showBrowser("pts", (f) => {
 			if(ptsLoader.loadAsync(f)){
@@ -161,43 +196,6 @@ public class TrajectoryHandler: MonoBehaviour{
 				models.Trajectories.Add(t);
 			}
 		});	
-	}
-
-
-	void updateTrajectory()
-	{
-		Trajectory t = models.Trajectories[currentTrajectoryId];
-
-		t.mu_u = mu_u;
-		t.mu_v = mu_v;
-		t.sig_u = sig_u;
-		t.sig_v = sig_v;
-		t.scale = models.scale;
-		t.droprate = droprate;
-		t.fliprate = fliprate;
-		t.FOV = FOV;
-		t.focalLength = focalLength;
-		t.aspect = aspect;
-		t.maxFeatures = maxFeatures;
-		t.update();
-
-		models.trajectoryLine.SetVertexCount(t.positions.Count);
-		models.trajectoryLine.SetPositions(t.positions.ToArray());
-
-
-		// currently removed because too slow
-		//foreach (Transform trans in models.TrajectoryGameObject.transform)
-		//{
-		//	Destroy(trans.gameObject);
-		//}
-		//for (int i = 0; i < t.positions.Count; i++)
-		//{
-		//	//GameObject cam = (GameObject)Instantiate(
-		//	//	cameraObject,
-		//	//	t.positions[i],
-		//	//	t.rotations[i]);
-		//	//cam.transform.parent = models.TrajectoryGameObject.transform;
-		//}
 	}
 
 
@@ -262,7 +260,17 @@ public class TrajectoryHandler: MonoBehaviour{
 		updateTrajectory();
 
 	}
-	//====================================================================//
+
+    void loadFeatures()
+    {
+        features.Clear();
+        MeshFilter[] mfs = models.Features.GetComponentsInChildren<MeshFilter>();
+        foreach (MeshFilter mf in mfs)
+        {
+            features.AddRange(mf.mesh.vertices.Select(p => mf.transform.TransformPoint(p)).ToList());
+        }
+    }
+    //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //
     //====================================================================//
     //********************************************************************//

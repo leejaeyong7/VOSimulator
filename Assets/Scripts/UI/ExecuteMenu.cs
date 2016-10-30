@@ -10,6 +10,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+
 using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -27,100 +29,139 @@ public class ExecuteMenu : MonoBehaviour
     //====================================================================//
     public Button pathUpButton;
     public Button pathDownButton;
+    public Dropdown PathDropdown;
     public Toggle numImagesToggle;
     public Toggle distanceOfIndexToggle;
-    public Dropdown PathDropdown;
     public Slider numImagesSlider;
     public Slider distanceOfIndexSlider;
     public Button ExecuteButton;
-	//====================================================================//
-	//                  END PUBLIC VARIABLE DEFINITIONS                   //
-	//====================================================================//
-	//====================================================================//
-	//                    PRIVATE VARIABLE DEFINITIONS                    //
-	//====================================================================//
-	//====================================================================//
-	//                  END PRIVATE VARIABLE DEFINITIONS                  //
-	//====================================================================//
-	//********************************************************************//
-	//****************************END VARIABLES***************************//
-	//********************************************************************//
-	//********************************************************************//
-	//****************************BEGIN METHODS***************************//
-	//********************************************************************//
-	//====================================================================//
-	//                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
-	//====================================================================//
-	//====================================================================//
-	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
-	//====================================================================//
-	//====================================================================//
-	//                     PUBLIC METHOD DEFINITIONS                      //
-	//====================================================================//
-	//====================================================================//
-	//                   END PUBLIC METHOD DEFINITIONS                    //
-	//====================================================================//
-	//====================================================================//
-	//                     PRIVATE METHOD DEFINITIONS                     //
-	//====================================================================//
-	//====================================================================//
-	//                   END PRIVATE METHOD DEFINITIONS                   //
-	//====================================================================//
-	//********************************************************************//
-	//*****************************END METHODS****************************//
-	//********************************************************************//
-	//********************************************************************//
-	//******************************BEGIN ETC*****************************//
-	//********************************************************************//
-	//====================================================================//
-	//                    HELPER FUNCTION DEFINITIONS                     //
-	//====================================================================//
-	void toggleExecution(bool toggle)
-	{
-		//	if (toggle) {
-		//		executionCount = 0;
-		//		trackedFeatures.Clear ();
-		//		Camera.main.cullingMask = 1;
-		//		enableCameraCollider (false);
-		//		loadFeatures ();
-		//		loadPathPoints ();
-		//		GUI.SetActive (false);
-		//	} else {
-		//		executionCount = -1;
-		//		Camera.main.cullingMask = -1;
-		//		enableCameraCollider (true);
-		//		GUI.SetActive (true);
-		//	}
-	}
+    public Button ExecuteAllButton;
+    //====================================================================//
+    //                  END PUBLIC VARIABLE DEFINITIONS                   //
+    //====================================================================//
+    //====================================================================//
+    //                    PRIVATE VARIABLE DEFINITIONS                    //
+    //====================================================================//
+    //====================================================================//
+    //                  END PRIVATE VARIABLE DEFINITIONS                  //
+    //====================================================================//
+    //********************************************************************//
+    //****************************END VARIABLES***************************//
+    //********************************************************************//
+    //********************************************************************//
+    //****************************BEGIN METHODS***************************//
+    //********************************************************************//
+    //====================================================================//
+    //                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
+    //====================================================================//
+    //====================================================================//
+    //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
+    //====================================================================//
+    void Awake()
+    {
+        MessageDispatcher.AddListener(
+            "LOAD_TRAJECTORY_DROPDOWN",
+            loadTrajectoryDropdownCallback);
 
+    }
+    void Start()
+    {
+        pathUpButton.onClick.AddListener(pathUpButtonCallback);
+        pathDownButton.onClick.AddListener(pathDownButtonCallback);
+        PathDropdown.onValueChanged.AddListener(pathDropdownCallback);
+        
+        numImagesToggle.onValueChanged.AddListener(numImagesToggleCallback);
+        distanceOfIndexToggle.onValueChanged.AddListener(numImagesToggleCallback);
+        numImagesSlider.onValueChanged.AddListener(numImagesSliderCallback);
+        distanceOfIndexSlider.onValueChanged.AddListener(distanceOfIndexSliderCallback);
+        ExecuteButton.onClick.AddListener(executeCallback);
+        ExecuteAllButton.onClick.AddListener(executeAllCallback);
 
-	// enables camera collider for gizmo selections
-	void enableCameraCollider(bool enable)
-	{
-		//BoxCollider[] mcs = Trajectories.GetComponentsInChildren<BoxCollider>();
-		//foreach (BoxCollider mc in mcs)
-		//{
-		//	mc.enabled = enable;
-		//}
-	}
+        MessageDispatcher.AddListener(
+            "SET_TRAJECTORY_DROPDOWN", setTrajectoryDropdownCallback);
+    }
+    void OnEnable()
+    {
+        MessageDispatcher.SendMessage("TRAJECTORY_DROPDOWN_REFRESH");
+    }
+    //====================================================================//
+    //                     PUBLIC METHOD DEFINITIONS                      //
+    //====================================================================//
+    //====================================================================//
+    //                   END PUBLIC METHOD DEFINITIONS                    //
+    //====================================================================//
+    //====================================================================//
+    //                     PRIVATE METHOD DEFINITIONS                     //
+    //====================================================================//
+    //====================================================================//
+    //                   END PRIVATE METHOD DEFINITIONS                   //
+    //====================================================================//
+    //********************************************************************//
+    //*****************************END METHODS****************************//
+    //********************************************************************//
+    //********************************************************************//
+    //******************************BEGIN ETC*****************************//
+    //********************************************************************//
+    //====================================================================//
+    //                    HELPER FUNCTION DEFINITIONS                     //
+    //====================================================================//
+    void pathUpButtonCallback()
+    {
+        MessageDispatcher.SendMessage("TRAJECTORY_UP_PRESSED");
+    }
+    void pathDownButtonCallback()
+    {
+        MessageDispatcher.SendMessage("TRAJECTORY_DOWN_PRESSED");
+    }
+    void pathDropdownCallback(int value)
+    {
+        MessageDispatcher.SendMessageData("TRAJECTORY_SELECTED", value);
+    }
+    void setTrajectoryDropdownCallback(IMessage rMessage)
+    {
+        int index = (int)rMessage.Data;
+        PathDropdown.value = index;
+    }
+    void loadTrajectoryDropdownCallback(IMessage rMessage)
+    {
+        List<string> pathnames = (List<string>)rMessage.Data;
+        PathDropdown.ClearOptions();
+        List<Dropdown.OptionData> optlist = new List<Dropdown.OptionData>();
+        foreach (string s in pathnames)
+        {
+            Dropdown.OptionData opt = new Dropdown.OptionData();
+            opt.text = s;
+            optlist.Add(opt);
+        }
+        PathDropdown.AddOptions(optlist);
+    }
 
+    void numImagesToggleCallback(bool ison)
+    {
+        MessageDispatcher.SendMessageData("", ison);
+    }
+    void numImagesSliderCallback(float value)
+    {
+        MessageDispatcher.SendMessageData("SET_NUM_IMAGES", value);
+    }
+    void distanceOfIndexSliderCallback(float value)
+    {
+        MessageDispatcher.SendMessageData("SET_NUM_INDEX_SKIP", value);
+    }
+    void executeCallback()
+    {
+        MessageDispatcher.SendMessage("EXECUTE_TRAJECTORY");
+    }
+    void executeAllCallback()
+    {
+        MessageDispatcher.SendMessage("EXECUTE_ALL_TRAJECTORIES");
+    }
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //
     //====================================================================//
     //********************************************************************//
     //*******************************END ETC******************************//
     //********************************************************************//
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 }
 //----------------------------------------------------------------------------//
 //                           END CLASS DEFINITIONS                            //

@@ -56,7 +56,7 @@ public class Models : MonoBehaviour
 	{
 		Trajectories = new List<Trajectory>();
 		MessageDispatcher.AddListener("SET_SCALE", setGlobalScaleHelper);
-		trajectoryLine = TrajectoryGameObject.AddComponent<LineRenderer>();
+		//trajectoryLine = TrajectoryGameObject.AddComponent<LineRenderer>();
 	}
 	//====================================================================//
 	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //

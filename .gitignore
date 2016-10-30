@@ -8,3 +8,4 @@ Obj/*
 *.user
 *.userprefs
 *.DS_store
+/Executes/Egg.pts
