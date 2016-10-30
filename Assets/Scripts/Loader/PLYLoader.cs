@@ -10,7 +10,7 @@ using CielaSpike;
 public class PLYLoader
 {
 	// Public values that can be accessed from externals
-	public GameObject pointsGameObject;
+	public GameObject pointsGameObject ;
 	public GameObject meshGameObject;
 
 
@@ -394,12 +394,15 @@ public class PLYLoader
 				GameObject.Destroy (go.gameObject);
 			}
 		} else {
-			pointsGameObject = new GameObject ("pointclouds");
+			throw new Exception("Target Gameobject not found!");
 		}
 		// attach pointclouds
 		for (int m = 0; m < meshes.Count; m++) {
 			GameObject plyObject = new GameObject ("pointcloud_" + m.ToString ());
 			plyObject.transform.parent = pointsGameObject.transform;
+			//plyObject.transform.localScale = new Vector3(1, 1, 1);
+			//plyObject.transform.localPosition = new Vector3();
+			//plyObject.transform.localRotation = new Quaternion();
 			MeshRenderer mr = plyObject.AddComponent<MeshRenderer> ();
 			MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
 			mf.mesh = meshes [m];
@@ -529,16 +532,19 @@ public class PLYLoader
 		mesh_r.colors = colors.ToArray ();
 		mesh_r.triangles = triangles.ToArray ();
 		meshes.Add (mesh_r);
-		if (meshGameObject= GameObject.Find ("pointcloudMesh")) {
+		if (meshGameObject != null){
 			foreach (Transform go in meshGameObject.transform) {
 				GameObject.Destroy (go.gameObject);
 			}
 		} else {
-			meshGameObject = new GameObject ("pointcloudMesh");
+			throw new Exception("Target Gameobject not found!");
 		}
 		for (int m = 0; m < meshes.Count; m++) {
 			GameObject plyObject = new GameObject ("pointcloud_" + m.ToString ());
 			plyObject.transform.parent = meshGameObject.transform;
+			//plyObject.transform.localScale = new Vector3(1, 1, 1);
+			//plyObject.transform.localPosition = new Vector3();
+			//plyObject.transform.localRotation = new Quaternion();
 			MeshRenderer mr = plyObject.AddComponent<MeshRenderer> ();
 			MeshFilter mf = plyObject.AddComponent<MeshFilter> ();
 			MeshCollider mc = plyObject.AddComponent<MeshCollider> ();

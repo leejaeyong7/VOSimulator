@@ -10,6 +10,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
 //----------------------------------------------------------------------------//

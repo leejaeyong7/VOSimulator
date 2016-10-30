@@ -1,7 +1,7 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : .cs
- * @brief      : 
+ * @file       : test.cs
+ * @brief      : Event handler for trajectory create UI
  * Copyright (c) Jae Yong Lee / UIUC Fall 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
@@ -10,6 +10,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -17,28 +18,28 @@ using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class ExecuteMenu : MonoBehaviour
+public class Models : MonoBehaviour
 {
-    //********************************************************************//
-    //***************************BEGIN VARIABLES**************************//
-    //********************************************************************//
-    //====================================================================//
-    //                    PUBLIC VARIABLE DEFINITIONS                     //
-    //====================================================================//
-    public Button pathUpButton;
-    public Button pathDownButton;
-    public Toggle numImagesToggle;
-    public Toggle distanceOfIndexToggle;
-    public Dropdown PathDropdown;
-    public Slider numImagesSlider;
-    public Slider distanceOfIndexSlider;
-    public Button ExecuteButton;
+
+	//********************************************************************//
+	//***************************BEGIN VARIABLES**************************//
+	//********************************************************************//
+	//====================================================================//
+	//                    PUBLIC VARIABLE DEFINITIONS                     //
+	//====================================================================//
+	public List<Trajectory> Trajectories;
+	public GameObject TrajectoryGameObject;
+	public GameObject Features;
+	public GameObject Surfaces;
+	public GameObject Objects;
+	public LineRenderer trajectoryLine;
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
 	//====================================================================//
 	//                    PRIVATE VARIABLE DEFINITIONS                    //
 	//====================================================================//
+	public float scale;
 	//====================================================================//
 	//                  END PRIVATE VARIABLE DEFINITIONS                  //
 	//====================================================================//
@@ -51,6 +52,12 @@ public class ExecuteMenu : MonoBehaviour
 	//====================================================================//
 	//                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
 	//====================================================================//
+	void Start()
+	{
+		Trajectories = new List<Trajectory>();
+		MessageDispatcher.AddListener("SET_SCALE", setGlobalScaleHelper);
+		trajectoryLine = TrajectoryGameObject.AddComponent<LineRenderer>();
+	}
 	//====================================================================//
 	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
 	//====================================================================//
@@ -63,6 +70,16 @@ public class ExecuteMenu : MonoBehaviour
 	//====================================================================//
 	//                     PRIVATE METHOD DEFINITIONS                     //
 	//====================================================================//
+	void setGlobalScaleHelper(IMessage rMessage)
+	{
+		scale = (float)rMessage.Data;
+		foreach (Transform t in Features.transform)
+		{
+			t.localScale = new Vector3(scale, scale, scale);
+		}
+		//Features.transform.localScale = new Vector3(scale, scale, scale);
+		MessageDispatcher.SendMessage("TRAJECTORY_UPDATED");
+	}
 	//====================================================================//
 	//                   END PRIVATE METHOD DEFINITIONS                   //
 	//====================================================================//
@@ -75,54 +92,13 @@ public class ExecuteMenu : MonoBehaviour
 	//====================================================================//
 	//                    HELPER FUNCTION DEFINITIONS                     //
 	//====================================================================//
-	void toggleExecution(bool toggle)
-	{
-		//	if (toggle) {
-		//		executionCount = 0;
-		//		trackedFeatures.Clear ();
-		//		Camera.main.cullingMask = 1;
-		//		enableCameraCollider (false);
-		//		loadFeatures ();
-		//		loadPathPoints ();
-		//		GUI.SetActive (false);
-		//	} else {
-		//		executionCount = -1;
-		//		Camera.main.cullingMask = -1;
-		//		enableCameraCollider (true);
-		//		GUI.SetActive (true);
-		//	}
-	}
-
-
-	// enables camera collider for gizmo selections
-	void enableCameraCollider(bool enable)
-	{
-		//BoxCollider[] mcs = Trajectories.GetComponentsInChildren<BoxCollider>();
-		//foreach (BoxCollider mc in mcs)
-		//{
-		//	mc.enabled = enable;
-		//}
-	}
-
-    //====================================================================//
-    //                  END HELPER FUNCTION DEFINITIONS                   //
-    //====================================================================//
-    //********************************************************************//
-    //*******************************END ETC******************************//
-    //********************************************************************//
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
+	//====================================================================//
+	//                  END HELPER FUNCTION DEFINITIONS                   //
+	//====================================================================//
+	//********************************************************************//
+	//*******************************END ETC******************************//
+	//********************************************************************//
 }
 //----------------------------------------------------------------------------//
 //                           END CLASS DEFINITIONS                            //
 //----------------------------------------------------------------------------//
-

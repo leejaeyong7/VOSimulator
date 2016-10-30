@@ -1,14 +1,13 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : .cs
- * @brief      : 
+ * @file       : ObjectHandler.cs
+ * @brief      : Event handler for Object menu
  * Copyright (c) Jae Yong Lee / UIUC Fall 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
 using com.ootii.Messages;
 //----------------------------------------------------------------------------//
@@ -17,22 +16,14 @@ using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class ExecuteMenu : MonoBehaviour
-{
-    //********************************************************************//
-    //***************************BEGIN VARIABLES**************************//
-    //********************************************************************//
-    //====================================================================//
-    //                    PUBLIC VARIABLE DEFINITIONS                     //
-    //====================================================================//
-    public Button pathUpButton;
-    public Button pathDownButton;
-    public Toggle numImagesToggle;
-    public Toggle distanceOfIndexToggle;
-    public Dropdown PathDropdown;
-    public Slider numImagesSlider;
-    public Slider distanceOfIndexSlider;
-    public Button ExecuteButton;
+public class ObjectHandler : MonoBehaviour {
+	//********************************************************************//
+	//***************************BEGIN VARIABLES**************************//
+	//********************************************************************//
+	//====================================================================//
+	//                    PUBLIC VARIABLE DEFINITIONS                     //
+	//====================================================================//
+
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
@@ -75,54 +66,13 @@ public class ExecuteMenu : MonoBehaviour
 	//====================================================================//
 	//                    HELPER FUNCTION DEFINITIONS                     //
 	//====================================================================//
-	void toggleExecution(bool toggle)
-	{
-		//	if (toggle) {
-		//		executionCount = 0;
-		//		trackedFeatures.Clear ();
-		//		Camera.main.cullingMask = 1;
-		//		enableCameraCollider (false);
-		//		loadFeatures ();
-		//		loadPathPoints ();
-		//		GUI.SetActive (false);
-		//	} else {
-		//		executionCount = -1;
-		//		Camera.main.cullingMask = -1;
-		//		enableCameraCollider (true);
-		//		GUI.SetActive (true);
-		//	}
-	}
-
-
-	// enables camera collider for gizmo selections
-	void enableCameraCollider(bool enable)
-	{
-		//BoxCollider[] mcs = Trajectories.GetComponentsInChildren<BoxCollider>();
-		//foreach (BoxCollider mc in mcs)
-		//{
-		//	mc.enabled = enable;
-		//}
-	}
-
-    //====================================================================//
-    //                  END HELPER FUNCTION DEFINITIONS                   //
-    //====================================================================//
-    //********************************************************************//
-    //*******************************END ETC******************************//
-    //********************************************************************//
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
+	//====================================================================//
+	//                  END HELPER FUNCTION DEFINITIONS                   //
+	//====================================================================//
+	//********************************************************************//
+	//*******************************END ETC******************************//
+	//********************************************************************//
 }
 //----------------------------------------------------------------------------//
 //                           END CLASS DEFINITIONS                            //
 //----------------------------------------------------------------------------//
-

@@ -26,9 +26,8 @@ public class SceneModeCameraMovement : MonoBehaviour {
 	public int type = 0;
 
 	// other public variables
-    public EditModeEvents ev;
+    public IOHandler ev;
 	public CustomFileBrowser fb;
-	public TerrainMenu tm;
 	public gizmoScript gizmos;
 	public bool isObjectDragged = false;
 
@@ -142,7 +141,6 @@ public class SceneModeCameraMovement : MonoBehaviour {
 		return !(isObjectDragged || 
 			PanelDragHandler.isPanelDragged || 
 			fb.showFB ||
-//			tm.isClicked || 
 			gizmos.isDragged ||
 			ev.isGUIClicked() );
 	}

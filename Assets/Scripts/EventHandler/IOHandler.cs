@@ -93,9 +93,9 @@ public class IOHandler : MonoBehaviour {
 	void terrainIOEvent(){
 		RaycastHit hit;
 		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
-		if (Terrain.activeTerrain.GetComponent<TerrainCollider> ().Raycast (ray, out hit, 1000.0f)) {
+		TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
+		if (tc.Raycast (ray, out hit, 1000.0f)) {
 			MessageDispatcher.SendMessageData ("SHOW_TERRAIN_BRUSH",true);			
-
 			MessageDispatcher.SendMessageData("SET_TERRAIN_BRUSH_POSITION",hit.point);
 			if (Input.GetMouseButton (0) && !isGUIClicked()) {
 				if (currentState == IO_States.ENVIRONMENT_TERRAIN_RELIEF) {

@@ -1,7 +1,7 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
  * @file       : FileMenu.cs
- * @brief      : Event handler for File menu
+ * @brief      : Event handler for File menu UI
  * Copyright (c) Jae Yong Lee / UIUC Fall 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
@@ -72,8 +72,12 @@ public class FileMenu : MonoBehaviour {
      */
     void OnEnable()
     {
-        MessageDispatcher.SendMessage("SET_STATE", "File");
+		MessageDispatcher.SendMessage("FILE_MENU_ENABLED");
     }
+	void OnDisable()
+	{
+		MessageDispatcher.SendMessage("FILE_MENU_DISABLED");
+	}
     //====================================================================//
     //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
     //====================================================================//
@@ -103,7 +107,7 @@ public class FileMenu : MonoBehaviour {
      */
     void newButtonCallback()
     {
-        
+		MessageDispatcher.SendMessage("FILE_MENU_NEW_PRESSED");
     }
 
     /**
@@ -111,7 +115,7 @@ public class FileMenu : MonoBehaviour {
      */
     void loadButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("FILE_MENU_LOAD_PRESSED");
     }
 
     /**
@@ -119,7 +123,7 @@ public class FileMenu : MonoBehaviour {
      */
     void saveButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("FILE_MENU_SAVE_PRESSED");
     }
 
     /**
@@ -127,7 +131,7 @@ public class FileMenu : MonoBehaviour {
      */
     void helpButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("FILE_MENU_HELP_PRESSED");
     }
 
     /**

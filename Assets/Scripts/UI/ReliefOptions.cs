@@ -75,12 +75,12 @@ public class ReliefOptions : MonoBehaviour
         terrainReliefBrushHeightCallback(terrainReliefBrushHeight.value);
         terrainReliefBrushSTDCallback(terrainReliefBrushSTD.value);
         MessageDispatcher.SendMessageData("SET_STATE", "TerrainRelief");
-
+		MessageDispatcher.SendMessage("TERRAIN_RELIEF_ENABLED");
     }
 
     void OnDisable()
     {
-
+		MessageDispatcher.SendMessage("TERRAIN_RELIEF_DISABLED");
     }
     //====================================================================//
     //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
@@ -111,26 +111,27 @@ public class ReliefOptions : MonoBehaviour
         if (ison)
         {
 
+			MessageDispatcher.SendMessageData("TOGGLE_TERRAIN", true);
         }
         else
         {
-
+			MessageDispatcher.SendMessageData("TOGGLE_TERRAIN", false);
         }
     }
 
     void terrainReliefBrushRadiusCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_BRUSH_RADIUS", value);
     }
 
     void terrainReliefBrushHeightCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_RELIEF_HEIGHT", value);
     }
 
     void terrainReliefBrushSTDCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_RELIEF_STD", value);
     }
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //

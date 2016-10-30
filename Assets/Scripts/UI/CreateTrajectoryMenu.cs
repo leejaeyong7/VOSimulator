@@ -98,49 +98,56 @@ public class CreateTrajectoryMenu : MonoBehaviour
     //====================================================================//
     void importTrajectoryButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("IMPORT_TRAJECTORY");
     }
     void noiseMeanUSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_2D_NOISE_MU_U",value);
 
     }
     void noiseMeanVSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_2D_NOISE_MU_V",value);
 
     }
     void noiseSTDUSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_2D_NOISE_SIG_U",value);
 
     }
     void noiseSTDVSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_2D_NOISE_SIG_V",value);
 
     }
     void maxFeatureNumSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_MAX_FEATURE_POINT",value);
 
     }
     void flipRateSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_FLIPRATE",value);
 
     }
     void dropRateSliderCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_DROPRATE",value);
     }
     void FocalLengthSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_FOCAL_LENGTH",value);
 
     }
     void FOVSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("SET_FOV",value);
 
     }
     void AspectSliderCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_ASPECT",value);
     }
-
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //
     //====================================================================//

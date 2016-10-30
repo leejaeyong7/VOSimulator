@@ -19,6 +19,14 @@ using com.ootii.Messages;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class TrajectoryMenu : MenuPanel {
+	public ViewTrajectoryMenu vm;
+	void Start()
+	{
+		MessageDispatcher.AddListener(
+			"LOAD_TRAJECTORY_DROPDOWN",
+			vm.loadTrajectoryDropdownCallback);
+
+	}
     //********************************************************************//
     //***************************BEGIN VARIABLES**************************//
     //********************************************************************//

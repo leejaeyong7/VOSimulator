@@ -69,6 +69,7 @@ public class TextureOptions : MonoBehaviour
         terrainTextureBrushRadiusCallback(terrainTextureBrushRadius.value);
         terrainTextureBrushIntensityCallback(terrainTextureBrushIntensity.value);
         textureDropdownCallback(textureDropdown.value);
+        MessageDispatcher.SendMessageData("SET_STATE", "TerrainTexture");
     }
 
     void OnDisable()
@@ -99,17 +100,17 @@ public class TextureOptions : MonoBehaviour
 
     void terrainTextureBrushRadiusCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_BRUSH_RADIUS", value);
     }
 
     void terrainTextureBrushIntensityCallback(float value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_TEXTURE_STRENGTH", value);
     }
 
     void textureDropdownCallback(int value)
     {
-
+		MessageDispatcher.SendMessageData("SET_TERRAIN_TEXTURE_TYPE", value);
     }
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //

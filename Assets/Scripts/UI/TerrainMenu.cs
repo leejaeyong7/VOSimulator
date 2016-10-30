@@ -88,6 +88,7 @@ public class TerrainMenu : MonoBehaviour {
      */
     void importFeatureButtonCallback()
     {
+		MessageDispatcher.SendMessage("TERRAIN_IMPORT_FEATURE_PRESSED");
 
     }
 
@@ -96,7 +97,7 @@ public class TerrainMenu : MonoBehaviour {
      */
     void importSurfaceButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("TERRAIN_IMPORT_SURFACE_PRESSED");
     }
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //

@@ -1,16 +1,14 @@
 ﻿/*============================================================================
  * @author     : Jae Yong Lee (leejaeyong7@gmail.com)
- * @file       : ViewTrajectoryMenu.cs
- * @brief      : Trajectory view mode event handler for UI
+ * @file       : FileHandler.cs
+ * @brief      : Event handler for File menu
  * Copyright (c) Jae Yong Lee / UIUC Fall 2016
  =============================================================================*/
 //----------------------------------------------------------------------------//
 //                               CLASS IMPORTS                                //
 //----------------------------------------------------------------------------//
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
-using System.Collections.Generic;
 using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             END CLASS IMPORTS                              //
@@ -18,23 +16,14 @@ using com.ootii.Messages;
 //----------------------------------------------------------------------------//
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
-public class ViewTrajectoryMenu : MonoBehaviour
-{
-    //********************************************************************//
-    //***************************BEGIN VARIABLES**************************//
-    //********************************************************************//
-    //====================================================================//
-    //                    PUBLIC VARIABLE DEFINITIONS                     //
-    //====================================================================//
-    public Button pathUpButton;
-    public Button pathDownButton;
-    public Dropdown pathDropdown;
-	public Slider scaleSlider;
-    public Text numCamera;
-    public Text totalLength;
-    public Text deltaX;
-    public Text deltaY;
-    public Text deltaZ;
+public class FileHandler : MonoBehaviour {
+	//********************************************************************//
+	//***************************BEGIN VARIABLES**************************//
+	//********************************************************************//
+	//====================================================================//
+	//                    PUBLIC VARIABLE DEFINITIONS                     //
+	//====================================================================//
+	public CustomFileBrowser fb;
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
@@ -53,28 +42,44 @@ public class ViewTrajectoryMenu : MonoBehaviour
 	//====================================================================//
 	//                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
 	//====================================================================//
+	/**
+	 * Attach message listeners
+	 */
+	void Start()
+	{
+		MessageDispatcher.AddListener("FILE_MENU_NEW_PRESSED",createNewProject);
+		MessageDispatcher.AddListener("FILE_MENU_SAVE_PRESSED",saveProject);
+		MessageDispatcher.AddListener("FILE_MENU_LOAD_PRESSED",loadProject);
+		MessageDispatcher.AddListener("FILE_MENU_HELP_PRESSED",displayHelp);
+	}
 	//====================================================================//
 	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
 	//====================================================================//
-    void Start()
-    {
-        pathUpButton.onClick.AddListener(pathUpButtonCallback);
-        pathDownButton.onClick.AddListener(pathDownButtonCallback);
-		scaleSlider.onValueChanged.AddListener(scaleChangeCallback);
-        pathDropdown.onValueChanged.AddListener(pathDropdownCallback);
-
-		MessageDispatcher.AddListener(
-			"SET_TRAJECTORY_DROPDOWN", setTrajectoryDropdownCallback);
-    }
-
-	void OnEnable()
+	//====================================================================//
+	//                     PUBLIC METHOD DEFINITIONS                      //
+	//====================================================================//
+	/**
+	 * Confirms user for starting a new project and creates empty project 
+	 */
+	public void createNewProject(IMessage rMessage)
 	{
-		MessageDispatcher.SendMessage("TRAJECTORY_DROPDOWN_REFRESH");
+
 	}
 
-    //====================================================================//
-    //                     PUBLIC METHOD DEFINITIONS                      //
-    //====================================================================//
+	public void saveProject(IMessage rMessage)
+	{
+
+	}
+
+	public void loadProject(IMessage rMessage)
+	{
+
+	}
+	public void displayHelp(IMessage rMessage)
+	{
+
+	}
+
     //====================================================================//
     //                   END PUBLIC METHOD DEFINITIONS                    //
     //====================================================================//
@@ -93,68 +98,6 @@ public class ViewTrajectoryMenu : MonoBehaviour
     //====================================================================//
     //                    HELPER FUNCTION DEFINITIONS                     //
     //====================================================================//
-    void pathUpButtonCallback()
-    {
-		MessageDispatcher.SendMessage("TRAJECTORY_UP_PRESSED");
-    }
-    void pathDownButtonCallback()
-    {
-		MessageDispatcher.SendMessage("TRAJECTORY_DOWN_PRESSED");
-    }
-    void pathDropdownCallback(int value)
-    {
-		MessageDispatcher.SendMessageData("TRAJECTORY_SELECTED",value);
-    }
-	void scaleChangeCallback(float value)
-	{
-		MessageDispatcher.SendMessageData("SET_SCALE", value);
-	}
-    void numCameraHelper(IMessage rMessage)
-    {
-		int num= (int)rMessage.Data;
-		numCamera.text = num.ToString();
-    }
-    void totalLengthHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		totalLength.text = len.ToString();
-    }
-    void deltaXHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaX.text = len.ToString();
-    }
-    void deltaYHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaY.text = len.ToString();
-    }
-    void deltaZHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaZ.text = len.ToString();
-    }
-
-	public void setTrajectoryDropdownCallback(IMessage rMessage)
-	{
-		int index = (int)rMessage.Data;
-		pathDropdown.value = index;
-	}
-	public void loadTrajectoryDropdownCallback(IMessage rMessage)
-	{
-		List<string> pathnames = (List<string>)rMessage.Data;
-		pathDropdown.ClearOptions();
-		List<Dropdown.OptionData> optlist = new List<Dropdown.OptionData>();
-		foreach (string s in pathnames)
-		{
-			Dropdown.OptionData opt = new Dropdown.OptionData();
-			opt.text = s;
-			optlist.Add(opt);
-		}
-		pathDropdown.AddOptions(optlist);
-	}
-
-
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //
     //====================================================================//
