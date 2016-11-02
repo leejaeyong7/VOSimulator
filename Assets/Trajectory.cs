@@ -101,6 +101,8 @@ public class Trajectory {
 	public float droprate = 0;
 	public float fliprate = 0;
 
+    public float imageCaptureThreshold = 0;
+
 	// Used for setting maximum number of features
 	public int maxFeatures = 0;
 
@@ -112,25 +114,27 @@ public class Trajectory {
 	//                    PRIVATE VARIABLE DEFINITIONS                    //
 	//====================================================================//
 	List<featurePoint> trackedFeatures = new List<featurePoint>();
-	//====================================================================//
-	//                  END PRIVATE VARIABLE DEFINITIONS                  //
-	//====================================================================//
-	//********************************************************************//
-	//****************************END VARIABLES***************************//
-	//********************************************************************//
-	//********************************************************************//
-	//****************************BEGIN METHODS***************************//
-	//********************************************************************//
-	//====================================================================//
-	//                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
-	//====================================================================//
-	//====================================================================//
-	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
-	//====================================================================//
-	//====================================================================//
-	//                     PUBLIC METHOD DEFINITIONS                      //
-	//====================================================================//
-	public void update()
+    int captureCounter = 0;
+    int totalCaptures = 0;
+    //====================================================================//
+    //                  END PRIVATE VARIABLE DEFINITIONS                  //
+    //====================================================================//
+    //********************************************************************//
+    //****************************END VARIABLES***************************//
+    //********************************************************************//
+    //********************************************************************//
+    //****************************BEGIN METHODS***************************//
+    //********************************************************************//
+    //====================================================================//
+    //                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
+    //====================================================================//
+    //====================================================================//
+    //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
+    //====================================================================//
+    //====================================================================//
+    //                     PUBLIC METHOD DEFINITIONS                      //
+    //====================================================================//
+    public void update()
 	{
 		positions.Clear();
 		for (int i = 0; i < origpositions.Count; i++)
@@ -138,12 +142,33 @@ public class Trajectory {
 			positions.Add(origpositions[i] * scale);
 		}
 	}
+    public void initialize()
+    {
+        executeId = 0;
+        totalCaptures = 0;
+    }
+    public void setCaptureThreshold(int num, bool isNumImages)
+    {
+        if (isNumImages)
+        {
+            float totalImages = (positions.Count);
+            imageCaptureThreshold = totalImages / num;
+        }else
+        {
+            imageCaptureThreshold = num;
+        }
+    }
 	public bool execute()
 	{
         if(executeId > positions.Count - 1)
         {
             executeId = -1;
             return false;
+        }
+        if(imageCaptureThreshold*totalCaptures >= executeId)
+        {
+            executeId++;
+            return true;
         }
 		System.Random rnd = new System.Random();
 		bool[] featureIndices = new bool[featurePoints.Count];
@@ -272,6 +297,7 @@ public class Trajectory {
 		);
 
         executeId++;
+        totalCaptures++;
         return true;
 	}
 	//====================================================================//

@@ -63,6 +63,9 @@ public class ExecuteMenu : MonoBehaviour
             "LOAD_TRAJECTORY_DROPDOWN",
             loadTrajectoryDropdownCallback);
 
+        MessageDispatcher.AddListener(
+            "SET_TRAJECTORY_RANGE", setTrajectoryRangeCallback);
+
     }
     void Start()
     {
@@ -79,6 +82,8 @@ public class ExecuteMenu : MonoBehaviour
 
         MessageDispatcher.AddListener(
             "SET_TRAJECTORY_DROPDOWN", setTrajectoryDropdownCallback);
+
+
     }
     void OnEnable()
     {
@@ -122,6 +127,12 @@ public class ExecuteMenu : MonoBehaviour
         int index = (int)rMessage.Data;
         PathDropdown.value = index;
     }
+    void setTrajectoryRangeCallback(IMessage rMessage)
+    {
+        numImagesSlider.maxValue = (int)rMessage.Data;
+    }
+
+
     void loadTrajectoryDropdownCallback(IMessage rMessage)
     {
         List<string> pathnames = (List<string>)rMessage.Data;

@@ -5,6 +5,7 @@ using System.Collections;
 public class SliderPanel : MonoBehaviour {
 	public Slider slider;
 	public InputField value;
+    public bool useMinMax;
 	public float min;
 	public float max;
 	public bool isPositive; 
@@ -12,8 +13,11 @@ public class SliderPanel : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		slider.onValueChanged.AddListener (onSliderValue);
-		slider.minValue = min;
-		slider.maxValue = max;
+        if (useMinMax)
+        {
+            slider.minValue = min;
+            slider.maxValue = max;
+        }
 		value.contentType = InputField.ContentType.Standard;
 		value.onValueChanged.AddListener (onInputValue);
 		value.text = slider.value.ToString ();
@@ -36,7 +40,13 @@ public class SliderPanel : MonoBehaviour {
 					v = slider.minValue;
 				}
 			}
-			value.text = v.ToString ("0.00");
+            if (slider.wholeNumbers)
+            {
+                value.text = v.ToString();
+            }else
+            {
+                value.text = v.ToString("0.00");
+            }
 			slider.value = v;
 		}
 	}

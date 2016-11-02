@@ -59,9 +59,13 @@ public class TrajectoryHandler: MonoBehaviour{
 	// Used for randomness modelling
 	float droprate = 0;
 	float fliprate = 0;
+    int numImages = 0;
 
-	// Used for setting maximum number of features
-	int maxFeatures = 500;
+    int numIndexSkip = 0;
+    bool numImagesMode;
+
+    // Used for setting maximum number of features
+    int maxFeatures = 500;
     List<Vector3> features;
     //====================================================================//
     //                  END PRIVATE VARIABLE DEFINITIONS                  //
@@ -124,14 +128,21 @@ public class TrajectoryHandler: MonoBehaviour{
 		MessageDispatcher.AddListener("SET_FLIPRATE",
 			delegate (IMessage rMessage) { fliprate = (float)rMessage.Data; });
 		MessageDispatcher.AddListener("SET_MAX_FEATURE_POINT",
-			delegate (IMessage rMessage) { maxFeatures = (int)rMessage.Data; });
+			delegate (IMessage rMessage) { maxFeatures = (int)((float)rMessage.Data); });
 		MessageDispatcher.AddListener("SET_FOCAL_LEGNTH",
 			delegate (IMessage rMessage) { focalLength = (float)rMessage.Data; });
 		MessageDispatcher.AddListener("SET_FOV",
 			delegate (IMessage rMessage) { fliprate = (float)rMessage.Data; });
 		MessageDispatcher.AddListener("SET_ASPECT",
 			delegate (IMessage rMessage) { aspect = (float)rMessage.Data; });
-	}
+
+        MessageDispatcher.AddListener("SET_NUM_IMAGES", 
+            delegate(IMessage rMessage) { numImages =  (int)((float)rMessage.Data); });
+        MessageDispatcher.AddListener("SET_NUM_INDEX_SKIP",
+            delegate (IMessage rMessage) { numIndexSkip =  (int)((float)rMessage.Data); });
+        MessageDispatcher.AddListener("TOGGLE_SKIP_METHOD",
+            delegate (IMessage rMessage) { numImagesMode = (bool)rMessage.Data; });
+    }
     //====================================================================//
     //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
     //====================================================================//
@@ -154,13 +165,20 @@ public class TrajectoryHandler: MonoBehaviour{
         t.focalLength = focalLength;
         t.aspect = aspect;
         t.maxFeatures = maxFeatures;
+        if (numImagesMode)
+        {
+            t.setCaptureThreshold(numImages,numImagesMode);
+        }
+        else
+        {
+            t.setCaptureThreshold(numIndexSkip, numImagesMode);
+        }
         t.update();
+        t.initialize();
         models.trajectoryLine.SetVertexCount(t.positions.Count);
         models.trajectoryLine.SetPositions(t.positions.ToArray());
         loadFeatures();
         t.featurePoints = features;
-        Debug.Log(features.Count);
-        t.executeId = 0;
         // currently removed because too slow
         //foreach (Transform trans in models.TrajectoryGameObject.transform)
         //{
@@ -239,14 +257,22 @@ public class TrajectoryHandler: MonoBehaviour{
 		MessageDispatcher.SendMessageData(
 			"SET_TRAJECTORY_DROPDOWN",
 			currentTrajectoryId);
-	}
+
+        MessageDispatcher.SendMessageData(
+            "SET_TRAJECTORY_RANGE",
+            models.Trajectories[currentTrajectoryId].positions.Count);
+    }
 
 	void loadTrajectoryHelper(IMessage rMessage)
 	{
 		List<string> pathnames = new List<string>();
 		pathnames = models.Trajectories.Select((t) => { return t.name; }).ToList();
 		MessageDispatcher.SendMessageData("LOAD_TRAJECTORY_DROPDOWN", pathnames);
-	}
+
+        MessageDispatcher.SendMessageData(
+            "SET_TRAJECTORY_RANGE",
+            models.Trajectories[currentTrajectoryId].positions.Count);
+    }
 
 
 	void trajectorySelectHelper(IMessage rMessage)
@@ -270,6 +296,7 @@ public class TrajectoryHandler: MonoBehaviour{
             features.AddRange(mf.mesh.vertices.Select(p => mf.transform.TransformPoint(p)).ToList());
         }
     }
+
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //
     //====================================================================//

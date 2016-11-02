@@ -37,14 +37,10 @@ public class ExecuteHandler : MonoBehaviour
     //====================================================================//
     int numImages;
     int numIndexSkip;
-
-    int executionId;
-    int executionCount;
-    string executionName;
+    
     List<int> executionQueue;
     List<Vector3> features;
 
-    bool numImagesMode;
     bool captureMode;
 	//====================================================================//
 	//                  END PRIVATE VARIABLE DEFINITIONS                  //
@@ -64,9 +60,6 @@ public class ExecuteHandler : MonoBehaviour
         captureMode = false;
         executionQueue = new List<int>();
         features = new List<Vector3>();
-        MessageDispatcher.AddListener("TOGGLE_SKIP_METHOD", numImagesToggleHandler);
-        MessageDispatcher.AddListener("SET_NUM_IMAGES",setNumImagesHandler);
-        MessageDispatcher.AddListener("SET_NUM_INDEX_SKIP", setNumIndexSkipHandler);
         MessageDispatcher.AddListener("EXECUTE_TRAJECTORY", executeHandler);
         MessageDispatcher.AddListener("EXECUTE_ALL_TRAJECTORIES", executeAllHandler);
     }
@@ -106,18 +99,6 @@ public class ExecuteHandler : MonoBehaviour
     //====================================================================//
     //                    HELPER FUNCTION DEFINITIONS                     //
     //====================================================================//
-    void numImagesToggleHandler(IMessage rMessage)
-    {
-        numImagesMode = (bool)rMessage.Data;
-    }
-    void setNumImagesHandler(IMessage rMessage)
-    {
-        numImages = (int)Mathf.Floor((float)rMessage.Data);
-    }
-    void setNumIndexSkipHandler(IMessage rMessage)
-    {
-        numIndexSkip = (int)Mathf.Floor((float)rMessage.Data);
-    }
     void executeHandler(IMessage rMessage)
     {
         executionQueue.Add(th.currentTrajectoryId);
