@@ -179,19 +179,6 @@ public class TrajectoryHandler: MonoBehaviour{
         models.trajectoryLine.SetPositions(t.positions.ToArray());
         loadFeatures();
         t.featurePoints = features;
-        // currently removed because too slow
-        //foreach (Transform trans in models.TrajectoryGameObject.transform)
-        //{
-        //	Destroy(trans.gameObject);
-        //}
-        //for (int i = 0; i < t.positions.Count; i++)
-        //{
-        //	//GameObject cam = (GameObject)Instantiate(
-        //	//	cameraObject,
-        //	//	t.positions[i],
-        //	//	t.rotations[i]);
-        //	//cam.transform.parent = models.TrajectoryGameObject.transform;
-        //}
     }
 
 

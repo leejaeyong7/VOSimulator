@@ -23,7 +23,8 @@ public class IOHandler : MonoBehaviour {
     IO_States currentState;
 	// Use this for initialization
 	void Start () {
-		MessageDispatcher.AddListener ("SET_STATE",setState);		
+        Screen.SetResolution(1080, 720, true);
+        MessageDispatcher.AddListener ("SET_STATE",setState);		
 		MessageDispatcher.AddListener ("SAVE_STATE",saveState);		
 		MessageDispatcher.AddListener ("LOAD_STATE",loadState);		
 	}

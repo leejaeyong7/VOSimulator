@@ -29,6 +29,7 @@ public class ExecuteHandler : MonoBehaviour
     public Models models;
     public TrajectoryHandler th;
     public GameObject GUI;
+    public Experiments expr;
     //====================================================================//
     //                  END PUBLIC VARIABLE DEFINITIONS                   //
     //====================================================================//
@@ -106,11 +107,18 @@ public class ExecuteHandler : MonoBehaviour
     }
     void executeAllHandler(IMessage rMessage)
     {
-        for(int i = 0; i < models.Trajectories.Count; i++)
+        if (expr.ison)
         {
-            executionQueue.Add(i);
+            expr.ExecuteRanges(0.0f, 4.0f, 8, 0.0f, 0.1f, 10);
         }
-        executeNext();
+        else
+        {
+            for (int i = 0; i < models.Trajectories.Count; i++)
+            {
+                executionQueue.Add(i);
+            }
+            executeNext();
+        }
     }
 
     void setupExecution(int id)
@@ -124,7 +132,8 @@ public class ExecuteHandler : MonoBehaviour
         Camera.main.cullingMask = 1;
         enableCameraCollider (false);
     }
-   
+
+
     void executeNext()
     {
         if (executionQueue.Count > 0)
@@ -139,6 +148,7 @@ public class ExecuteHandler : MonoBehaviour
             enableCameraCollider(true);
             GUI.SetActive(true);
             captureMode = false;
+            MessageDispatcher.AddListener("EXECUTE_FINISHED", executeHandler);
         }
     }
     

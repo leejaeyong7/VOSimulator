@@ -47,9 +47,6 @@ public class PTSLoader
 			if (num_markers <= 0) {
 				return false;
 			}
-			for (int i = 0; i < num_markers; i++) {
-				reader.ReadLine ();
-			}
 		}
 		reader.Close ();
 		return true;

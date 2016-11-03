@@ -288,12 +288,17 @@ public class Trajectory {
 		v.setFeatures(trackedFeatures);
         System.IO.Directory.CreateDirectory("./Executes/" + name.ToString() + '/');
 
+        System.IO.Directory.CreateDirectory("./Executes/" + name.ToString() + "/f" + fliprate.ToString("0.00") + "s"
+            + sig_u.ToString("0.00")+ '/');
+
         System.IO.File.WriteAllText(
-			"./Executes/" + name.ToString()+'/' + executeId.ToString() + ".txt",
+			"./Executes/" + name.ToString()+ "/f" + fliprate.ToString("0.00") + "s" +
+            sig_u.ToString("0.00")+ "/" + executeId.ToString() + ".txt",
 			v.ToString()
 		);
 		Application.CaptureScreenshot(
-			"./Executes/" + name.ToString()+'/' + executeId.ToString() + ".png"
+			"./Executes/" + name.ToString()+ "/f" + fliprate.ToString("0.00") + "s" +
+            sig_u.ToString("0.00") + "/" + executeId.ToString() + ".png"
 		);
 
         executeId++;
