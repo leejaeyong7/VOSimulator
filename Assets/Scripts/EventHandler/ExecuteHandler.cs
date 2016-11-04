@@ -40,7 +40,6 @@ public class ExecuteHandler : MonoBehaviour
     int numIndexSkip;
     
     List<int> executionQueue;
-    List<Vector3> features;
 
     bool captureMode;
 	//====================================================================//
@@ -60,7 +59,6 @@ public class ExecuteHandler : MonoBehaviour
     {
         captureMode = false;
         executionQueue = new List<int>();
-        features = new List<Vector3>();
         MessageDispatcher.AddListener("EXECUTE_TRAJECTORY", executeHandler);
         MessageDispatcher.AddListener("EXECUTE_ALL_TRAJECTORIES", executeAllHandler);
     }

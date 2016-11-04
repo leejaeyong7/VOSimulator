@@ -61,8 +61,10 @@ public class TrajectoryHandler: MonoBehaviour{
 	float fliprate = 0;
     int numImages = 0;
 
-    int numIndexSkip = 0;
-    bool numImagesMode;
+    int numIndexSkip = 1;
+    bool numImagesMode = true;
+    bool indexSkipMode = false;
+    bool distanceSkipMode = true;
 
     // Used for setting maximum number of features
     int maxFeatures = 500;
@@ -140,6 +142,15 @@ public class TrajectoryHandler: MonoBehaviour{
             delegate(IMessage rMessage) { numImages =  (int)((float)rMessage.Data); });
         MessageDispatcher.AddListener("SET_NUM_INDEX_SKIP",
             delegate (IMessage rMessage) { numIndexSkip =  (int)((float)rMessage.Data); });
+
+
+		MessageDispatcher.AddListener ("NUM_IMAGE_MODE",
+			delegate(IMessage rMessage) { numImagesMode = (bool)rMessage.Data;});
+        MessageDispatcher.AddListener("INDEX_SKIP_MODE",
+			delegate(IMessage rMessage) { indexSkipMode = (bool)rMessage.Data; });
+        MessageDispatcher.AddListener("DISTANCE_CAMERA_MODE", 
+			delegate(IMessage rMessage) { distanceSkipMode = (bool)rMessage.Data;});
+
         MessageDispatcher.AddListener("TOGGLE_SKIP_METHOD",
             delegate (IMessage rMessage) { numImagesMode = (bool)rMessage.Data; });
     }
@@ -165,14 +176,13 @@ public class TrajectoryHandler: MonoBehaviour{
         t.focalLength = focalLength;
         t.aspect = aspect;
         t.maxFeatures = maxFeatures;
-        if (numImagesMode)
-        {
-            t.setCaptureThreshold(numImages,numImagesMode);
-        }
-        else
-        {
-            t.setCaptureThreshold(numIndexSkip, numImagesMode);
-        }
+
+		t.maxImageSubsampleMode = numImagesMode;
+		t.numMaxImages = numImages;
+		t.indexSkipSubsampleMode = indexSkipMode;
+		t.numIndexSkip = numIndexSkip;
+		t.distanceSkipSubsampleMode = distanceSkipMode;
+
         t.update();
         t.initialize();
         models.trajectoryLine.SetVertexCount(t.positions.Count);

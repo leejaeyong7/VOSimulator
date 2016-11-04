@@ -106,7 +106,14 @@ public class Trajectory {
 	// Used for setting maximum number of features
 	public int maxFeatures = 0;
 
+	public bool maxImageSubsampleMode = true;
+	public bool indexSkipSubsampleMode = false;
+	public bool distanceSkipSubsampleMode = true;
+
+	public int numMaxImages = 0;
+	public int numIndexSkip = 0;
     public int executeId;
+
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
@@ -114,8 +121,11 @@ public class Trajectory {
 	//                    PRIVATE VARIABLE DEFINITIONS                    //
 	//====================================================================//
 	List<featurePoint> trackedFeatures = new List<featurePoint>();
-    int captureCounter = 0;
     int totalCaptures = 0;
+	float totalLength = 0;
+	float captureThreshold = 0;
+	float lengthThreshold = 0;
+	float cumulativeLength = 0;
     //====================================================================//
     //                  END PRIVATE VARIABLE DEFINITIONS                  //
     //====================================================================//
@@ -137,39 +147,65 @@ public class Trajectory {
     public void update()
 	{
 		positions.Clear();
-		for (int i = 0; i < origpositions.Count; i++)
+		Vector3 temp = origpositions [0];
+		totalLength = 0;
+		positions.Add(origpositions[0] * scale);
+		for (int i = 1; i < origpositions.Count; i++)
 		{
+			totalLength += (origpositions [i] - temp).magnitude;
 			positions.Add(origpositions[i] * scale);
+			temp = origpositions [i];
 		}
+		totalLength *= scale;
+		setupSubsampleConstants ();
 	}
     public void initialize()
     {
         executeId = 0;
         totalCaptures = 0;
+		cumulativeLength = 0;
     }
-    public void setCaptureThreshold(int num, bool isNumImages)
+	void setupSubsampleConstants()
     {
-        if (isNumImages)
-        {
-            float totalImages = (positions.Count);
-            imageCaptureThreshold = totalImages / num;
-        }else
-        {
-            imageCaptureThreshold = num;
-        }
+		float divisionFactor = 1;
+		if (maxImageSubsampleMode) {
+			divisionFactor = ((float)positions.Count)/numMaxImages;
+		}
+		if(indexSkipSubsampleMode){
+			captureThreshold = divisionFactor*numIndexSkip; 
+		}
+		else if (distanceSkipSubsampleMode) {
+			lengthThreshold = (float)totalLength / numMaxImages;	
+		}
     }
 	public bool execute()
 	{
+		// if execute has been finished, return false;
         if(executeId > positions.Count - 1)
         {
             executeId = -1;
             return false;
         }
-        if(imageCaptureThreshold*totalCaptures >= executeId)
-        {
-            executeId++;
-            return true;
-        }
+		// if using disatnce skip mode, 
+		if (distanceSkipSubsampleMode) {
+			while (cumulativeLength <= lengthThreshold * totalCaptures) {
+				if (executeId > 0) {
+					float dist = (positions [executeId - 1] - positions [executeId]).magnitude;
+					cumulativeLength += dist;
+				} else {
+					cumulativeLength = 0;	
+				}
+				executeId++;
+				if (executeId > positions.Count - 1) {
+					return false;
+				}
+			}
+		} else if(totalCaptures*captureThreshold > executeId){
+			// if using other method
+			executeId++;
+			return true;
+		}
+
 		System.Random rnd = new System.Random();
 		bool[] featureIndices = new bool[featurePoints.Count];
 		Vector3[] featureScreenPos = new Vector3[featurePoints.Count];

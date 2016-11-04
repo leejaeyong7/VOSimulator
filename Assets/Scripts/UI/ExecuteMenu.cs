@@ -32,6 +32,7 @@ public class ExecuteMenu : MonoBehaviour
     public Dropdown PathDropdown;
     public Toggle numImagesToggle;
     public Toggle distanceOfIndexToggle;
+	public Toggle distanceOfCameraToggle;
     public Slider numImagesSlider;
     public Slider distanceOfIndexSlider;
     public Button ExecuteButton;
@@ -73,6 +74,9 @@ public class ExecuteMenu : MonoBehaviour
         pathDownButton.onClick.AddListener(pathDownButtonCallback);
         PathDropdown.onValueChanged.AddListener(pathDropdownCallback);
         
+        numImagesToggle.onValueChanged.AddListener(numImagesToggleCallback);
+        distanceOfIndexToggle.onValueChanged.AddListener(indexSkipToggleCallback);
+        distanceOfCameraToggle.onValueChanged.AddListener(distanceCameraToggleCallback);
         numImagesToggle.onValueChanged.AddListener(numImagesToggleCallback);
         distanceOfIndexToggle.onValueChanged.AddListener(numImagesToggleCallback);
         numImagesSlider.onValueChanged.AddListener(numImagesSliderCallback);
@@ -149,8 +153,17 @@ public class ExecuteMenu : MonoBehaviour
 
     void numImagesToggleCallback(bool ison)
     {
-        MessageDispatcher.SendMessageData("", ison);
+        MessageDispatcher.SendMessageData("NUM_IMAGE_MODE", ison);
     }
+    void indexSkipToggleCallback(bool ison)
+    {
+        MessageDispatcher.SendMessageData("INDEX_SKIP_MODE", ison);
+    }
+    void distanceCameraToggleCallback(bool ison)
+    {
+        MessageDispatcher.SendMessageData("DISTANCE_CAMERA_MODE", ison);
+    }
+
     void numImagesSliderCallback(float value)
     {
         MessageDispatcher.SendMessageData("SET_NUM_IMAGES", value);
