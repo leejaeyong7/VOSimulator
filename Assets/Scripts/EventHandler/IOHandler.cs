@@ -20,6 +20,7 @@ enum IO_States : int {
 
 public class IOHandler : MonoBehaviour {
 	public TerrainHandler terrainHandler;
+    public ObjectHandler objectHandler;
 	IO_States savedState;
     IO_States currentState;
 	// Use this for initialization
@@ -81,6 +82,7 @@ public class IOHandler : MonoBehaviour {
 			terrainIOEvent ();
 			break;
 		case IO_States.ENVIRONMENT_OBJECT:
+            objectIOEvent();
 			break;
 		default:
 			break;
@@ -117,15 +119,22 @@ public class IOHandler : MonoBehaviour {
 		}
 	}
 	void objectIOEvent(){
-		
-	}
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
+        if (objectHandler.isObjectPlaceMode && tc.Raycast(ray, out hit, 1000.0f))
+        {
+            objectHandler.currObj.SetActive(true);
+            objectHandler.currObj.transform.position = hit.point;
+
+        }
+        else if (objectHandler.isObjectPlaceMode)
+        {
+            objectHandler.currObj.SetActive(false);
+        }
+    }
 
 	void commonIOEvent (){
-		RaycastHit hit;
-		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
-		TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
-		if (tc.Raycast (ray, out hit, 1000.0f)) {
-		}
 		
 	}
 

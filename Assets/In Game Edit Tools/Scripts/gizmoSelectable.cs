@@ -13,8 +13,11 @@ public class gizmoSelectable : MonoBehaviour {
 	bool gravity;
 	Transform[] child;
 	public bool ignoreChildTransform = false;
-
+    LocalMenu localMenu;
 	void Start () {
+        GameObject ob = GameObject.Find("Canvas");
+        localMenu = ob.transform.Find("LocalEditPanel").GetComponent<LocalMenu>();
+
 		if (gameObject.CompareTag ("Untagged")) {
 			gameObject.tag = gizmoScript.GS.tagToFind;
 		}
@@ -32,9 +35,11 @@ public class gizmoSelectable : MonoBehaviour {
 				} else {
 					if (hit.transform == transform) { //Selects only one object in the scene
 						selected = true;
+                        localMenu.currObj = gameObject;
+                        localMenu.gameObject.SetActive(true);
 					} else {
 						selected = false;
-					}
+                    }
 				}
 			} else if (!hited && gizmoScript.GS.selected == null) {
 				if (!Input.GetKey (KeyCode.LeftControl) && selected == true) {

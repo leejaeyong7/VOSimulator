@@ -17,14 +17,15 @@ using com.ootii.Messages;
 //                             CLASS DEFINITIONS                              //
 //----------------------------------------------------------------------------//
 public class ObjectHandler : MonoBehaviour {
-	//********************************************************************//
-	//***************************BEGIN VARIABLES**************************//
-	//********************************************************************//
-	//====================================================================//
-	//                    PUBLIC VARIABLE DEFINITIONS                     //
-	//====================================================================//
+    //********************************************************************//
+    //***************************BEGIN VARIABLES**************************//
+    //********************************************************************//
+    //====================================================================//
+    //                    PUBLIC VARIABLE DEFINITIONS                     //
+    //====================================================================//
+    public Models models;
 	public bool isObjectPlaceMode;
-
+    public GameObject currObj = null;
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
@@ -43,6 +44,39 @@ public class ObjectHandler : MonoBehaviour {
 	//====================================================================//
 	//                 MONOBEHAVIOR FUNCTION DEFINITIONS                  //
 	//====================================================================//
+    void Start()
+    {
+        MessageDispatcher.AddListener("OBJECT_SELECT_ITEM_CLICKED", delegate (IMessage rMessage)
+        {
+            isObjectPlaceMode = true;
+            currObj = Instantiate((GameObject)rMessage.Data);
+        });
+    }
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (isObjectPlaceMode)
+            {
+                if (currObj != null && currObj.active)
+                {
+                    currObj.transform.parent = models.Objects.transform;
+                    currObj = null;
+                }
+                else if(!currObj.active)
+                {
+                    Destroy(currObj);
+                    currObj = null;
+                }
+                isObjectPlaceMode = false;
+            }
+        }
+        else if (Input.GetMouseButtonDown(2))
+        {
+            Destroy(currObj);
+            currObj = null;
+        }
+    }
 	//====================================================================//
 	//               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
 	//====================================================================//

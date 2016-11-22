@@ -16,6 +16,7 @@ public class ObjectSelector : MonoBehaviour {
 			GameObject no = Instantiate (objectSelectorItemPrefab);
 			RawImage ri = no.GetComponent<RawImage> ();
 			Button btn = no.GetComponent<Button> ();
+            
 			ri.texture = eo.thumbnail;
 			btn.targetGraphic = ri;
 			no.name = gameObject.name + "_" + count.ToString ();
