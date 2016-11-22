@@ -27,7 +27,7 @@ public class EditModeEvents : MonoBehaviour {
 	void Start(){
 		highlighter = Shader.Find ("Custom/GlowShader");
 		localMenu.Hide ();
-		previewMenu.Hide();
+		previewMenu.gameObject.SetActive(false);
 	}
     //--------------------------------------------------------------------//
     //                    PUBLIC FUNCTION DEFINITIONS                     //

@@ -19,11 +19,12 @@ enum IO_States : int {
 };
 
 public class IOHandler : MonoBehaviour {
+	public TerrainHandler terrainHandler;
 	IO_States savedState;
     IO_States currentState;
 	// Use this for initialization
 	void Start () {
-        Screen.SetResolution(1080, 720, true);
+        Screen.SetResolution(752, 480, true);
         MessageDispatcher.AddListener ("SET_STATE",setState);		
 		MessageDispatcher.AddListener ("SAVE_STATE",saveState);		
 		MessageDispatcher.AddListener ("LOAD_STATE",loadState);		
@@ -79,6 +80,8 @@ public class IOHandler : MonoBehaviour {
 		case IO_States.ENVIRONMENT_TERRAIN_TEXTURE:
 			terrainIOEvent ();
 			break;
+		case IO_States.ENVIRONMENT_OBJECT:
+			break;
 		default:
 			break;
 		}
@@ -87,7 +90,11 @@ public class IOHandler : MonoBehaviour {
 
 	void trajectoryIOEvent(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
-			MessageDispatcher.SendMessage ("ADD_TRAJECTORY_POINT");			
+			MessageDispatcher.SendMessage ("ADD_TRAJECTORY_POINT");	
+		}
+		if (Input.GetMouseButtonDown (0)) {
+			if (!isGUIClicked ()) {
+			}
 		}
 	}
 
@@ -95,7 +102,7 @@ public class IOHandler : MonoBehaviour {
 		RaycastHit hit;
 		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 		TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
-		if (tc.Raycast (ray, out hit, 1000.0f)) {
+		if (tc.Raycast (ray, out hit, 1000.0f) && terrainHandler.isUsingBrush) {
 			MessageDispatcher.SendMessageData ("SHOW_TERRAIN_BRUSH",true);			
 			MessageDispatcher.SendMessageData("SET_TERRAIN_BRUSH_POSITION",hit.point);
 			if (Input.GetMouseButton (0) && !isGUIClicked()) {
@@ -109,8 +116,16 @@ public class IOHandler : MonoBehaviour {
 			MessageDispatcher.SendMessageData ("SHOW_TERRAIN_BRUSH",false);			
 		}
 	}
+	void objectIOEvent(){
+		
+	}
 
 	void commonIOEvent (){
+		RaycastHit hit;
+		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+		TerrainCollider tc = Terrain.activeTerrain.GetComponent<TerrainCollider>();
+		if (tc.Raycast (ray, out hit, 1000.0f)) {
+		}
 		
 	}
 

@@ -71,6 +71,11 @@ public class CreateTrajectoryMenu : MonoBehaviour
         FOVSlider.onValueChanged.AddListener(FOVSliderCallback);
         AspectSlider.onValueChanged.AddListener(AspectSliderCallback);
     }
+	void OnEnable()
+	{
+		MessageDispatcher.SendMessageData("SET_STATE", "TrajectoryCreate");
+	}
+
 
     //====================================================================//
     //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //

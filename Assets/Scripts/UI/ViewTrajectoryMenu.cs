@@ -35,6 +35,7 @@ public class ViewTrajectoryMenu : MonoBehaviour
     public Text deltaX;
     public Text deltaY;
     public Text deltaZ;
+	public Models models;
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //
 	//====================================================================//
@@ -70,6 +71,7 @@ public class ViewTrajectoryMenu : MonoBehaviour
 	void OnEnable()
 	{
 		MessageDispatcher.SendMessage("TRAJECTORY_DROPDOWN_REFRESH");
+		MessageDispatcher.SendMessageData("SET_STATE","TrajectoryView");
 	}
 
     //====================================================================//
@@ -108,37 +110,24 @@ public class ViewTrajectoryMenu : MonoBehaviour
 	void scaleChangeCallback(float value)
 	{
 		MessageDispatcher.SendMessageData("SET_SCALE", value);
+		int index = pathDropdown.value;
+		numCamera.text = models.Trajectories [index].num_camera.ToString();
+		totalLength.text = models.Trajectories [index].totalLength.ToString();
+		deltaX.text = models.Trajectories [index].dist_x.ToString();
+		deltaY.text = models.Trajectories [index].dist_y.ToString();
+		deltaZ.text = models.Trajectories [index].dist_z.ToString();
 	}
-    void numCameraHelper(IMessage rMessage)
-    {
-		int num= (int)rMessage.Data;
-		numCamera.text = num.ToString();
-    }
-    void totalLengthHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		totalLength.text = len.ToString();
-    }
-    void deltaXHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaX.text = len.ToString();
-    }
-    void deltaYHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaY.text = len.ToString();
-    }
-    void deltaZHelper(IMessage rMessage)
-    {
-		float len = (float)rMessage.Data;
-		deltaZ.text = len.ToString();
-    }
 
 	public void setTrajectoryDropdownCallback(IMessage rMessage)
 	{
 		int index = (int)rMessage.Data;
 		pathDropdown.value = index;
+		numCamera.text = models.Trajectories [index].num_camera.ToString();
+		totalLength.text = models.Trajectories [index].totalLength.ToString();
+		deltaX.text = models.Trajectories [index].dist_x.ToString();
+		deltaY.text = models.Trajectories [index].dist_y.ToString();
+		deltaZ.text = models.Trajectories [index].dist_z.ToString();
+
 	}
 	public void loadTrajectoryDropdownCallback(IMessage rMessage)
 	{

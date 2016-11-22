@@ -23,6 +23,7 @@ public class ObjectHandler : MonoBehaviour {
 	//====================================================================//
 	//                    PUBLIC VARIABLE DEFINITIONS                     //
 	//====================================================================//
+	public bool isObjectPlaceMode;
 
 	//====================================================================//
 	//                  END PUBLIC VARIABLE DEFINITIONS                   //

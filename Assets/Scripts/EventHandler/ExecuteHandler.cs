@@ -146,7 +146,7 @@ public class ExecuteHandler : MonoBehaviour
             enableCameraCollider(true);
             GUI.SetActive(true);
             captureMode = false;
-            MessageDispatcher.AddListener("EXECUTE_FINISHED", executeHandler);
+			MessageDispatcher.SendMessage ("EXECUTE_FINISHED");
         }
     }
     

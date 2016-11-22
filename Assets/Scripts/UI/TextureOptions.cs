@@ -70,11 +70,13 @@ public class TextureOptions : MonoBehaviour
         terrainTextureBrushIntensityCallback(terrainTextureBrushIntensity.value);
         textureDropdownCallback(textureDropdown.value);
         MessageDispatcher.SendMessageData("SET_STATE", "TerrainTexture");
+		MessageDispatcher.SendMessage("TERRAIN_TEXTURE_ENABLED");
     }
 
     void OnDisable()
     {
-
+		Debug.Log ("test");
+		MessageDispatcher.SendMessage("TERRAIN_TEXTURE_DISABLED");
     }
     //====================================================================//
     //                     PUBLIC METHOD DEFINITIONS                      //

@@ -24,6 +24,7 @@ public class PTSLoader
 		// clear previous vectors
 		positions.Clear ();
 		rotations.Clear ();
+		flipIndices.Clear ();
 
 		System.IO.StreamReader reader = fp.OpenText();
 		string line;
@@ -46,15 +47,13 @@ public class PTSLoader
 			positions.Add (new Vector3 (x, y, z));
 
 			Quaternion currRot = new Quaternion (a, b, c, d);
+			Quaternion mocapSystemOffset = Quaternion.Euler (0, -90, 0);
+			currRot = currRot * mocapSystemOffset;
 			if (index > 0) {
 				float angle1 = Quaternion.Angle (currRot, prevRot);
-				Quaternion flipped = new Quaternion (0, 1.0f, 0, 0);
+				Quaternion flipped = Quaternion.Euler (0, 180, 0);
 				flipped = prevRot*flipped;
 				float angle2 = Quaternion.Angle (currRot, flipped);
-
-//				Quaternion prevRotInv = Quaternion.Inverse (prevRot);
-//				float angle2 = Quaternion.Angle (currRot, prevRotInv);
-				// is fliped
 				if (Mathf.Abs(angle1) > Mathf.Abs(angle2)){
 					// if last one was not flipped
 					if (flipIndices.Count == 0 || 
@@ -63,7 +62,7 @@ public class PTSLoader
 					}
 				} else {
 					// if last one was flipped
-					if (flipIndices.Count > 1 &&
+					if (flipIndices.Count > 0 &&
 						flipIndices [flipIndices.Count - 1] == index - 1) {
 						flipIndices.Add (index);		
 					}

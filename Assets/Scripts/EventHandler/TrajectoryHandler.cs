@@ -33,6 +33,8 @@ public class TrajectoryHandler: MonoBehaviour{
 	// Pointer to GUI that I use to hide when running trajectory
 	public GameObject GUI;
 
+	public PreviewMenu previewMenu;
+
 	public Models models;
 
     public int currentTrajectoryId;
@@ -69,6 +71,11 @@ public class TrajectoryHandler: MonoBehaviour{
     // Used for setting maximum number of features
     int maxFeatures = 500;
     List<Vector3> features;
+
+	CustomTrajectory customTrajectory;
+	List<ControlPoint> controlPoints;
+
+
     //====================================================================//
     //                  END PRIVATE VARIABLE DEFINITIONS                  //
     //====================================================================//
@@ -87,12 +94,17 @@ public class TrajectoryHandler: MonoBehaviour{
 
 		ptsLoader = new PTSLoader();
         features = new List<Vector3>();
+		controlPoints = new List<ControlPoint>();
 		// set main culling mask to everything
 		Camera.main.cullingMask = -1;
-		// initialize vectors
+		// initialize trajectories
+		customTrajectory = new CustomTrajectory ();
+		customTrajectory.name = "Custom";
+		models.Trajectories.Add ((Trajectory)customTrajectory);
 
 		// setup event listeners
 		MessageDispatcher.AddListener("IMPORT_TRAJECTORY",importTrajectory);
+		MessageDispatcher.AddListener ("ADD_TRAJECTORY_POINT",addTrajectoryPoint);
 
 		MessageDispatcher.AddListener(
 			"TRAJECTORY_UP_PRESSED",
@@ -213,6 +225,19 @@ public class TrajectoryHandler: MonoBehaviour{
 		});	
 	}
 
+	void addTrajectoryPoint(IMessage rMessage)
+	{
+		Vector3 newPos = Camera.main.transform.position;
+		Quaternion newRot = Camera.main.transform.rotation;
+		ControlPoint cp = new ControlPoint ();
+		cp.position = newPos;
+		cp.rotation = newRot;
+		controlPoints.Add (cp);
+		customTrajectory.controlPoints = controlPoints;
+		addCamera (cp, controlPoints.Count);
+		customTrajectory.update ();
+		updateTrajectory();
+	}
 
 
     //====================================================================//
@@ -293,6 +318,23 @@ public class TrajectoryHandler: MonoBehaviour{
             features.AddRange(mf.mesh.vertices.Select(p => mf.transform.TransformPoint(p)).ToList());
         }
     }
+
+
+	// adds camera on scene using prefab
+	void addCamera(ControlPoint point,int id){
+		GameObject camera = Instantiate (cameraObject);
+		camera.GetComponent<Camera> ().enabled = false;
+		camera.name = "Trajectory_View_" + id.ToString();
+		camera.transform.position = point.position;
+		camera.transform.rotation = point.rotation;
+		camera.transform.localScale = new Vector3 (10,10,10);
+		BoxCollider boxCol = camera.AddComponent<BoxCollider> ();
+		boxCol.size = new Vector3 (0.3f,0.3f,0.3f);
+		CameraObject co = camera.AddComponent<CameraObject> ();
+		co.pm = previewMenu;
+		camera.transform.SetParent (models.TrajectoryGameObject.transform);
+	}
+
 
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //

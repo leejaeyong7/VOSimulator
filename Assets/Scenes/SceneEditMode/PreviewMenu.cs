@@ -2,11 +2,11 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class PreviewMenu : MenuPanel {
+public class PreviewMenu : MonoBehaviour{
 	public GameObject attachedObject;
 	public GameObject previewScreen;
 	public Rect viewport;
-	public bool enableUpdateViewport = false;
+//	public bool enableUpdateViewport = true;
 	// Use this for initialization
 	void Start () {
 		attachedObject = null;
@@ -27,15 +27,13 @@ public class PreviewMenu : MenuPanel {
 	
 	// Update is called once per frame
 	void Update () {
-		if (enableUpdateViewport) {
-			updateViewport ();
-		}
-		if (attachedObject) {
+		if (attachedObject){
 			Camera cam = attachedObject.GetComponent<Camera> ();
 			if (cam) {
+				updateViewport ();
 				cam.rect = viewport;
 			}
-		}
+		} 
 
 	}
 }

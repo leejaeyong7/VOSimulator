@@ -35,7 +35,6 @@ public class ObjectMenu : MonoBehaviour {
     public Toggle featureSourceVertex;
     public Toggle featureSourceFace;
     public Toggle featureCollisionOn;
-    public Toggle featureCollisionOff;
     //====================================================================//
     //                  END PUBLIC VARIABLE DEFINITIONS                   //
     //====================================================================//
@@ -65,7 +64,6 @@ public class ObjectMenu : MonoBehaviour {
         featureSourceVertex.onValueChanged.AddListener(featureSourceVertexCallback);
         featureSourceFace.onValueChanged.AddListener(featureSourceFaceCallback);
         featureCollisionOn.onValueChanged.AddListener(featureCollisionOnCallback);
-        featureCollisionOff.onValueChanged.AddListener(featureCollisionOffCallback);
     }
     //====================================================================//
     //               END MONOBEHAVIOR FUNCTION DEFINITIONS                //
@@ -93,39 +91,38 @@ public class ObjectMenu : MonoBehaviour {
     //====================================================================//
     void objectTypeDropdownCallback(int value)
     {
-
+		MessageDispatcher.SendMessageData ("", value);
     }
     void objectAddButtonCallback()
     {
-
+		MessageDispatcher.SendMessage("");
     }
     void objectEditButtonCallback()
     {
+		MessageDispatcher.SendMessage("");
 
     }
     void objectRemoveButtonCallback()
     {
+		MessageDispatcher.SendMessage("");
 
     }
     void numberOfFeatureSliderCallback(float value)
     {
+		MessageDispatcher.SendMessageData("",value);
 
     }
     void featureSourceVertexCallback(bool ison)
     {
-
+		MessageDispatcher.SendMessageData("",ison);
     }
     void featureSourceFaceCallback(bool ison)
     {
-
+		MessageDispatcher.SendMessageData("",ison);
     }
     void featureCollisionOnCallback(bool ison)
     {
-
-    }
-    void featureCollisionOffCallback(bool ison)
-    {
-
+		MessageDispatcher.SendMessageData("",ison);
     }
     //====================================================================//
     //                  END HELPER FUNCTION DEFINITIONS                   //

@@ -6,12 +6,12 @@ IBeginDragHandler, IEndDragHandler,IDragHandler {
 	public PreviewMenu menu;
 
     new public void OnBeginDrag(PointerEventData eventData) {
-		menu.enableUpdateViewport = true;
+//		menu.enableUpdateViewport = true;
 		base.OnBeginDrag(eventData);
     }
     new public void OnEndDrag(PointerEventData eventData)
     {
-		menu.enableUpdateViewport = false;
+//		menu.enableUpdateViewport = false;
 		base.OnEndDrag (eventData);
     }
 }

@@ -30,6 +30,7 @@ public class TerrainHandler : MonoBehaviour {
     public Transform brushTransform;
 	public CustomFileBrowser fb;
 	public Models models;
+	public bool isUsingBrush;
     //====================================================================//
     //                  END PUBLIC VARIABLE DEFINITIONS                   //
     //====================================================================//
@@ -116,6 +117,11 @@ public class TerrainHandler : MonoBehaviour {
 			"TERRAIN_IMPORT_SURFACE_PRESSED",
 			importSurfaceCallback
 		);
+
+		MessageDispatcher.AddListener ( "TERRAIN_TEXTURE_ENABLED", EnabledCallback);
+		MessageDispatcher.AddListener ( "TERRAIN_TEXTURE_DISABLED", DisabledCallback);
+		MessageDispatcher.AddListener ( "TERRAIN_RELIEF_ENABLED", EnabledCallback);
+		MessageDispatcher.AddListener ( "TERRAIN_RELIEF_DISABLED", DisabledCallback);
 	}
 
 	//====================================================================//
@@ -153,13 +159,15 @@ public class TerrainHandler : MonoBehaviour {
 	//====================================================================//
 	//                     PRIVATE METHOD DEFINITIONS                     //
 	//====================================================================//
-	void EnabledCallback()
+	void EnabledCallback(IMessage rMessage)
 	{
+		isUsingBrush = true;
 		DisplayBrush(true && terrainShown);
 	}
 
-	void DisabledCallback()
+	void DisabledCallback(IMessage rMessage)
 	{
+		isUsingBrush = false;
 		DisplayBrush(false);
 	}
 
